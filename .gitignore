@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Diagnostics & verification screenshots in root
+/*.png
+
+# Test & verification automation scripts
+/test-*.mjs
+/verify-*.mjs
+/capture-*.mjs
+/debug-*.mjs
