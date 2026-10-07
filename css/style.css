@@ -1,4 +1,4 @@
-/* 《智谋决：三国萌将推线大作战》商业级全流程多页面 UI 样式库 */
+/* 《吞食三国传》全流程复古军争 UI 样式库 */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -356,14 +356,14 @@ html, body {
 }
 
 .logo-top {
-  font-size: 3.8rem;
+  font-size: 3.1rem;
   font-weight: 900;
   font-family: "Songti SC", "SimSun", "STSong", serif;
   background: linear-gradient(180deg, #dc2626 0%, #b91c1c 50%, #7f1d1d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: 16px;
-  padding-left: 16px;
+  letter-spacing: 8px;
+  padding-left: 8px;
   filter: drop-shadow(0 3px 3px rgba(127, 29, 29, 0.35));
 }
 

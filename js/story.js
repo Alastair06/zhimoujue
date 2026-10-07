@@ -1,4 +1,4 @@
-// 《智谋决：三国萌将推线大作战》四大势力专属历史战役剧本库 (蜀汉传 · 曹魏传 · 东吴传 · 群雄传)
+// 《吞食三国传》四大势力专属历史战役剧本库 (蜀汉传 · 曹魏传 · 东吴传 · 群雄传)
 import { FACTION_INFOS, WEI_CHAPTERS, WU_CHAPTERS, QUN_CHAPTERS } from './campaigns-data.js?v=20261002_1';
 
 export const STORY_CHAPTERS = [
@@ -547,7 +547,7 @@ export const STORY_CHAPTERS = [
     era: 3,
     name: "五丈终决",
     title: "【第十八章】五丈决战 · 孔明智斗司马懿",
-    subtitle: "公元234年 · 诸葛孔明与司马懿展开巅峰终极对决，智谋决出天下一统！",
+    subtitle: "公元234年 · 诸葛孔明与司马懿展开五丈原巅峰对决，一战定汉魏乾坤！",
     objective: { type: "destroy_castle", label: "天下一统", desc: "攻破渭水终极铁壁大营！" },
     recruitHeroId: "caocao",
     recruitHeroIds: ["caocao"],

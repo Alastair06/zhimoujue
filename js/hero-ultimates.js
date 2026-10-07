@@ -1,4 +1,4 @@
-// 《智谋决》名将怒气专属无双必杀技库 (Active Hero Ultimates)
+// 《吞食三国传》名将怒气专属无双必杀技库 (Active Hero Ultimates)
 
 export const HERO_ULTIMATES = {
   // ================= 🟢 蜀汉阵营 (10位) =================
