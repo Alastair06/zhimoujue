@@ -5,9 +5,20 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>吞食三国传</title>
-  <link rel="stylesheet" href="css/style.css?v=20261007_3">
+  
+  <!-- PWA & Standalone App Support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#b91c1c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="吞食三国传">
+  <link rel="apple-touch-icon" href="assets/ui/pwa-icon-192.png">
+  <link rel="icon" type="image/png" href="assets/ui/pwa-icon-192.png">
+
+  <link rel="stylesheet" href="css/style.css?v=20261011_1">
 </head>
 <body>
 
@@ -70,15 +81,24 @@
 
         <!-- 主菜单导航大按钮 -->
         <div class="main-menu-buttons">
-          <div style="display:flex; gap:12px; width:100%; max-width:680px; margin:0 auto 12px auto;">
-            <button class="btn-main-action btn-march-campaign" id="btn-menu-campaign" style="flex:1;">
+          <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:680px; margin:0 auto 12px auto;">
+            <!-- 主战役入口 -->
+            <button class="btn-main-action btn-march-campaign" id="btn-menu-campaign" style="width:100%;">
               <img src="assets/ui/icon_box_sword.png" class="btn-main-ui-icon" alt="征战" />
-              <span class="btn-text">起兵 · 征 战 天 下</span>
+              <span class="btn-text">起 兵 · 征 战 天 下</span>
             </button>
-            <button class="btn-main-action" id="btn-menu-endless" style="flex:1; background:linear-gradient(135deg, #7c2d12, #b45309); border:4px solid #f59e0b; box-shadow:0 6px 0 #78350f; border-radius:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-              <span style="font-size:1.8rem;">🏯</span>
-              <span class="btn-text" style="color:#fef08a; font-weight:900; font-size:1.25rem;">铜雀演武 · 无尽试炼</span>
-            </button>
+            
+            <!-- 双人对决与无尽试炼 双核模式 -->
+            <div style="display:flex; gap:12px; width:100%;">
+              <button class="btn-main-action" id="btn-menu-pvp" style="flex:1; background:linear-gradient(135deg, #1e3a8a, #3b82f6); border:4px solid #93c5fd; box-shadow:0 6px 0 #1e293b; border-radius:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <span style="font-size:1.8rem;">⚔️</span>
+                <span class="btn-text" style="color:#eff6ff; font-weight:900; font-size:1.15rem;">双雄会盟 · 同屏对决</span>
+              </button>
+              <button class="btn-main-action" id="btn-menu-endless" style="flex:1; background:linear-gradient(135deg, #7c2d12, #b45309); border:4px solid #f59e0b; box-shadow:0 6px 0 #78350f; border-radius:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <span style="font-size:1.8rem;">🏯</span>
+                <span class="btn-text" style="color:#fef08a; font-weight:900; font-size:1.15rem;">铜雀演武 · 无尽试炼</span>
+              </button>
+            </div>
           </div>
 
           <div class="menu-sub-buttons">
@@ -97,6 +117,10 @@
             <button class="btn-sub-action" id="btn-menu-gallery">
               <img src="assets/ui/icon_box_crown.png" class="btn-sub-ui-icon" alt="图鉴" />
               <span>名将图鉴</span>
+            </button>
+            <button class="btn-sub-action" id="btn-menu-pwa-install" style="background:#eff6ff; border-color:#93c5fd; color:#1e40af;">
+              <span style="font-size:1.2rem;">📱</span>
+              <span>独立 App 体验</span>
             </button>
             <button class="btn-sub-action" id="btn-menu-sound">
               <img src="assets/ui/btn_circle_gear.png" class="btn-sub-ui-icon" alt="音效" />
@@ -648,6 +672,106 @@
             <div class="cd-overlay" id="cd-mantian"><span class="cd-text"></span></div>
           </button>
 
+        </div>
+      </footer>
+
+      <!-- 双人同屏对决专属操控台 (仅在 PvP 模式激活) -->
+      <footer class="pvp-control-dock hidden" id="pvp-control-dock">
+        <!-- 左侧 P1 蓝方（汉室先锋）操作盘 -->
+        <div class="pvp-deck-player pvp-deck-p1">
+          <div class="pvp-deck-header">
+            <span class="pvp-player-tag p1-tag">🟦 P1 蓝方 · 汉室先锋</span>
+            <span class="pvp-key-hint">快捷键: 1~4 / Q, W</span>
+          </div>
+          <div class="pvp-cards-row">
+            <button class="pvp-card-btn" id="pvp-btn-p1-infantry" data-cost="50" title="P1坚盾步兵 (快捷键: 1)">
+              <span class="pvp-card-hotkey">1</span>
+              <img src="assets/generals/infantry_128.png" class="pvp-card-img" alt="步兵" />
+              <span class="pvp-card-name">步兵</span>
+              <span class="pvp-card-cost">50</span>
+            </button>
+            <button class="pvp-card-btn" id="pvp-btn-p1-archer" data-cost="75" title="P1连弩弓手 (快捷键: 2)">
+              <span class="pvp-card-hotkey">2</span>
+              <img src="assets/generals/archer_128.png" class="pvp-card-img" alt="弓手" />
+              <span class="pvp-card-name">弓兵</span>
+              <span class="pvp-card-cost">75</span>
+            </button>
+            <button class="pvp-card-btn" id="pvp-btn-p1-cavalry" data-cost="120" title="P1重甲铁骑 (快捷键: 3)">
+              <span class="pvp-card-hotkey">3</span>
+              <img src="assets/generals/cavalry_128.png" class="pvp-card-img" alt="铁骑" />
+              <span class="pvp-card-name">铁骑</span>
+              <span class="pvp-card-cost">120</span>
+            </button>
+            <button class="pvp-card-btn" id="pvp-btn-p1-catapult" data-cost="160" title="P1投石巨车 (快捷键: 4)">
+              <span class="pvp-card-hotkey">4</span>
+              <img src="assets/ui/catapult.png" class="pvp-card-img" alt="投石" />
+              <span class="pvp-card-name">投石车</span>
+              <span class="pvp-card-cost">160</span>
+            </button>
+            <button class="pvp-card-btn pvp-card-hero" id="pvp-btn-p1-guanyu" data-cost="180" title="P1武圣关羽 (快捷键: Q)">
+              <span class="pvp-card-hotkey">Q</span>
+              <img src="assets/generals/guanyu_128.png" class="pvp-card-img" alt="关羽" />
+              <span class="pvp-card-name">关羽</span>
+              <span class="pvp-card-cost">180</span>
+            </button>
+            <button class="pvp-card-btn pvp-card-hero" id="pvp-btn-p1-zhaoyun" data-cost="170" title="P1神将赵云 (快捷键: W)">
+              <span class="pvp-card-hotkey">W</span>
+              <img src="assets/generals/zhaoyun_128.png" class="pvp-card-img" alt="赵云" />
+              <span class="pvp-card-name">赵云</span>
+              <span class="pvp-card-cost">170</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 中间分割对决印记 -->
+        <div class="pvp-vs-divider">
+          <div class="pvp-vs-text">VS</div>
+        </div>
+
+        <!-- 右侧 P2 红方（魏武先锋）操作盘 -->
+        <div class="pvp-deck-player pvp-deck-p2">
+          <div class="pvp-deck-header">
+            <span class="pvp-key-hint">快捷键: 7~0 / O, P</span>
+            <span class="pvp-player-tag p2-tag">🟥 P2 红方 · 魏武雄狮</span>
+          </div>
+          <div class="pvp-cards-row">
+            <button class="pvp-card-btn" id="pvp-btn-p2-infantry" data-cost="50" title="P2坚盾步兵 (快捷键: 7)">
+              <span class="pvp-card-hotkey">7</span>
+              <img src="assets/generals/infantry_128.png" class="pvp-card-img" alt="步兵" />
+              <span class="pvp-card-name">步兵</span>
+              <span class="pvp-card-cost">50</span>
+            </button>
+            <button class="pvp-card-btn" id="pvp-btn-p2-archer" data-cost="75" title="P2连弩弓手 (快捷键: 8)">
+              <span class="pvp-card-hotkey">8</span>
+              <img src="assets/generals/archer_128.png" class="pvp-card-img" alt="弓手" />
+              <span class="pvp-card-name">弓兵</span>
+              <span class="pvp-card-cost">75</span>
+            </button>
+            <button class="pvp-card-btn" id="pvp-btn-p2-cavalry" data-cost="120" title="P2重甲铁骑 (快捷键: 9)">
+              <span class="pvp-card-hotkey">9</span>
+              <img src="assets/generals/cavalry_128.png" class="pvp-card-img" alt="铁骑" />
+              <span class="pvp-card-name">铁骑</span>
+              <span class="pvp-card-cost">120</span>
+            </button>
+            <button class="pvp-card-btn" id="pvp-btn-p2-catapult" data-cost="160" title="P2投石巨车 (快捷键: 0)">
+              <span class="pvp-card-hotkey">0</span>
+              <img src="assets/ui/catapult.png" class="pvp-card-img" alt="投石" />
+              <span class="pvp-card-name">投石车</span>
+              <span class="pvp-card-cost">160</span>
+            </button>
+            <button class="pvp-card-btn pvp-card-hero" id="pvp-btn-p2-lvbu" data-cost="200" title="P2战神吕布 (快捷键: O)">
+              <span class="pvp-card-hotkey">O</span>
+              <img src="assets/generals/lvbu_128.png" class="pvp-card-img" alt="吕布" />
+              <span class="pvp-card-name">吕布</span>
+              <span class="pvp-card-cost">200</span>
+            </button>
+            <button class="pvp-card-btn pvp-card-hero" id="pvp-btn-p2-caocao" data-cost="180" title="P2魏王曹操 (快捷键: P)">
+              <span class="pvp-card-hotkey">P</span>
+              <img src="assets/generals/caocao_128.png" class="pvp-card-img" alt="曹操" />
+              <span class="pvp-card-name">曹操</span>
+              <span class="pvp-card-cost">180</span>
+            </button>
+          </div>
         </div>
       </footer>
     </section>
@@ -1484,6 +1608,44 @@
     </div>
   </div>
 
-  <script type="module" src="js/main.js?v=20261003_1"></script>
+  <!-- ================= 11. PWA 独立 App 安装指引弹窗 (PWA Guide Modal) ================= -->
+  <div class="modal-backdrop hidden" id="modal-pwa-guide">
+    <div class="modal-dialog-card pwa-guide-card" style="max-width:520px; text-align:center;">
+      <div style="font-size:3.5rem; margin-bottom:8px;">📱</div>
+      <h2 style="font-size:1.5rem; color:#b91c1c; margin-bottom:6px; font-family:'Songti SC', serif; font-weight:900;">独立桌面 App · 离线畅玩指南</h2>
+      <p style="color:#64748b; font-size:0.9rem; margin-bottom:16px;">
+        《吞食三国传》已全面适配 PWA 离线技术，添加到桌面后可免除浏览器地址栏，全屏沉浸、零网络飞行模式亦可秒开畅玩！
+      </p>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; text-align:left; font-size:0.9rem; line-height:1.7; margin-bottom:18px;">
+        <div style="font-weight:bold; color:#1e293b; margin-bottom:6px;">🍎 iPad / iPhone (Safari 浏览器)：</div>
+        <div style="color:#475569;">1. 点击 Safari 底部或右上角 <strong>分享按钮 ( <span style="font-size:1.1rem;">↗️</span> )</strong></div>
+        <div style="color:#475569;">2. 下拉菜单中选择 <strong>“添加到主屏幕 ➕”</strong></div>
+        <div style="color:#475569;">3. 回到桌面点击<strong>《吞食三国》</strong>图标，即可全屏独占畅玩！</div>
+        
+        <div style="font-weight:bold; color:#1e293b; margin:10px 0 6px 0;">🤖 Android / PC Chrome / Edge：</div>
+        <div style="color:#475569;">• 点击浏览器地址栏右侧 <strong>“安装 💻”</strong> 图标或菜单中的 <strong>“安装到应用”</strong> 即可一键生成独立桌面程序。</div>
+      </div>
+
+      <button class="btn-main-action" id="btn-close-pwa-guide" style="width:100%; max-width:240px; margin:0 auto; padding:10px 24px; border-radius:12px;">
+        知晓 · 返回军营 ⚔️
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js?v=20261011_1"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => {
+            console.log('【吞食三国传】PWA 离线服务已就绪:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('【吞食三国传】PWA 离线服务注册提示:', err);
+          });
+      });
+    }
+  </script>
 </body>
 </html>

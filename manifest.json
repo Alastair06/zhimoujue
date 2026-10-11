@@ -1,0 +1,26 @@
+{
+  "name": "吞食三国传",
+  "short_name": "吞食三国",
+  "description": "汉魏烽烟 · 像素破阵 · 战法连携 · 武庙封侯 · 纯前端零依赖独立战棋演义",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#1e1e24",
+  "theme_color": "#b91c1c",
+  "categories": ["games", "strategy"],
+  "icons": [
+    {
+      "src": "assets/ui/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/ui/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

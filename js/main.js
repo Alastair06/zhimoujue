@@ -981,6 +981,12 @@ class PushWarGameApp {
       }
     });
 
+    if (viewName !== "battle") {
+      this.isPvPMode = false;
+      document.querySelector('.bottom-control-deck')?.classList.remove("hidden");
+      document.getElementById('pvp-control-dock')?.classList.add("hidden");
+    }
+
     if (viewName === "title") {
       this.updateTitleScreen();
     } else if (viewName === "map") {
@@ -1425,11 +1431,23 @@ class PushWarGameApp {
     // 开启战歌循环 BGM
     sound.startBgm();
 
+    const isPvP = stageId === 'pvp';
+    this.isPvPMode = isPvP;
     const isEndless = stageId === 'endless';
     this.isEndlessMode = isEndless;
     let ch;
 
-    if (isEndless) {
+    if (isPvP) {
+      ch = {
+        id: 'pvp',
+        castleHp: 2500,
+        enemyGoldRate: 12,
+        enemyName: "魏武雄狮 (P2)",
+        enemyTitle: "右翼大营",
+        allowedGeneralCards: ['guanyu', 'zhaoyun', 'lvbu', 'caocao'],
+        objective: { type: 'destroy_castle', label: '双雄会盟', desc: '【P1 蓝方 vs P2 红方】击破对方要塞即可大捷！' }
+      };
+    } else if (isEndless) {
       this.endlessWave = 1;
       this.endlessWaveTimer = 0;
       ch = {
@@ -1470,9 +1488,28 @@ class PushWarGameApp {
       SaveManager.save(this.saveData);
     }
 
-    this.gold = 220 + extraStartGold;
-    this.goldRate = (this.saveData.upgrades.economyRate || 12) + extraFarmRate;
-    this.enemyGold = 220;
+    const bottomDeck = document.querySelector('.bottom-control-deck');
+    const pvpDock = document.getElementById('pvp-control-dock');
+    if (isPvP) {
+      bottomDeck?.classList.add('hidden');
+      pvpDock?.classList.remove('hidden');
+      this.gold = 160;
+      this.enemyGold = 160;
+      this.goldRate = 12;
+      this.enemyGoldRate = 12;
+      const stageBadge = document.getElementById('stage-badge');
+      if (stageBadge) stageBadge.textContent = "汉室先锋";
+      const enemyTitle = document.getElementById('enemy-title-text');
+      if (enemyTitle) enemyTitle.textContent = "魏武雄狮";
+      const enemySub = document.getElementById('enemy-sub-text');
+      if (enemySub) enemySub.textContent = "右翼大本营";
+    } else {
+      bottomDeck?.classList.remove('hidden');
+      pvpDock?.classList.add('hidden');
+      this.gold = 220 + extraStartGold;
+      this.goldRate = (this.saveData.upgrades.economyRate || 12) + extraFarmRate;
+      this.enemyGold = 220;
+    }
     this.aiHeroSpawned = false;
     this.playerSpawnHistory = [];
     this.enemyTargetSpawnPlan = null;
@@ -1543,14 +1580,17 @@ class PushWarGameApp {
       this.battle.addFloatingText("战前重金投石巨车领衔出阵！", 150, this.battle.groundY - 50, "#0284c7", 1.5);
     }
 
-    document.getElementById("stage-badge").textContent = isEndless ? "铜雀演武" : ("第 " + stageId + " 章");
+    document.getElementById("stage-badge").textContent = isPvP ? "汉室先锋" : (isEndless ? "铜雀演武" : ("第 " + stageId + " 章"));
     document.getElementById("enemy-title-text").textContent = ch.enemyName;
     document.getElementById("enemy-sub-text").textContent = ch.enemyTitle;
 
     // 动态调整底部卡片可见性 (名将严格展示所选编队，至多3人)
     this.updateBattleDeckVisibility(ch.allowedGeneralCards || []);
 
-    if (isEndless) {
+    if (isPvP) {
+      this.gameState = "battling";
+      this.battle.addFloatingText("⚔️ 双雄会盟 · 同屏死战！两军对垒，冲锋破寨！", this.canvas.width * 0.5, this.battle.groundY - 100, "#f59e0b", 2.2);
+    } else if (isEndless) {
       this.gameState = "battling";
       this.battle.addFloatingText("⚔️ 铜雀演武正式开阵！万军出击！", this.canvas.width * 0.5, this.battle.groundY - 100, "#f59e0b", 2.2);
     } else {
@@ -1716,6 +1756,40 @@ class PushWarGameApp {
     });
   }
 
+  // 开启双雄会盟 · 同屏对决
+  startPvP() {
+    sound.playDrum();
+    this.startStage('pvp');
+  }
+
+  // 双人对决专属出兵调度
+  spawnPvPUnit(team, type, cost) {
+    if (this.gameState !== "battling" || !this.isPvPMode) return;
+    const isBlue = team === 'blue';
+    const curGold = isBlue ? this.gold : this.enemyGold;
+    if (curGold < cost) return;
+
+    // 武将同一时间在场限出一员
+    if (this.battle.isHeroType(type) && this.battle.isHeroAlive(type, team)) {
+      return;
+    }
+
+    if (isBlue) {
+      this.gold -= cost;
+    } else {
+      this.enemyGold -= cost;
+    }
+
+    const unit = this.battle.spawnUnit(type, team);
+    if (unit) {
+      if (this.battle.isHeroType(type)) {
+        sound.playHeroHorn();
+      } else {
+        sound.playSpawn(type);
+      }
+    }
+  }
+
   // 释放锦囊计谋 (执行严格 CD 与军费扣减)
   castStratagem(id, fn) {
     if (this.gameState !== "battling") return;
@@ -1741,6 +1815,20 @@ class PushWarGameApp {
       this.switchView("map");
     });
 
+    // 双雄会盟 · 同屏对决入口绑定
+    document.getElementById("btn-menu-pvp")?.addEventListener("click", () => {
+      this.startPvP();
+    });
+
+    // PWA 离线指南弹窗绑定
+    document.getElementById("btn-menu-pwa-install")?.addEventListener("click", () => {
+      sound.playDrum();
+      document.getElementById("modal-pwa-guide")?.classList.remove("hidden");
+    });
+    document.getElementById("btn-close-pwa-guide")?.addEventListener("click", () => {
+      document.getElementById("modal-pwa-guide")?.classList.add("hidden");
+    });
+
     // 铜雀演武 · 无尽试炼入口绑定
     document.getElementById("btn-menu-endless")?.addEventListener("click", () => {
       sound.playDrum();
@@ -1751,6 +1839,32 @@ class PushWarGameApp {
       this.openPreBattleModal('endless');
     });
 
+    // PvP 双人操作盘按钮事件绑定
+    const pvpBtnMap = [
+      { id: "pvp-btn-p1-infantry", team: "blue", type: "infantry", cost: 50 },
+      { id: "pvp-btn-p1-archer", team: "blue", type: "archer", cost: 75 },
+      { id: "pvp-btn-p1-cavalry", team: "blue", type: "cavalry", cost: 120 },
+      { id: "pvp-btn-p1-catapult", team: "blue", type: "catapult", cost: 160 },
+      { id: "pvp-btn-p1-guanyu", team: "blue", type: "guanyu", cost: 180 },
+      { id: "pvp-btn-p1-zhaoyun", team: "blue", type: "zhaoyun", cost: 170 },
+
+      { id: "pvp-btn-p2-infantry", team: "red", type: "infantry", cost: 50 },
+      { id: "pvp-btn-p2-archer", team: "red", type: "archer", cost: 75 },
+      { id: "pvp-btn-p2-cavalry", team: "red", type: "cavalry", cost: 120 },
+      { id: "pvp-btn-p2-catapult", team: "red", type: "catapult", cost: 160 },
+      { id: "pvp-btn-p2-lvbu", team: "red", type: "lvbu", cost: 200 },
+      { id: "pvp-btn-p2-caocao", team: "red", type: "caocao", cost: 180 },
+    ];
+
+    pvpBtnMap.forEach(item => {
+      const btn = document.getElementById(item.id);
+      if (btn) {
+        btn.addEventListener("click", () => {
+          this.spawnPvPUnit(item.team, item.type, item.cost);
+        });
+      }
+    });
+
     // 战歌 BGM 开关
     document.getElementById("btn-bgm-toggle")?.addEventListener("click", () => {
       const playing = sound.toggleBgm();
@@ -1758,10 +1872,29 @@ class PushWarGameApp {
       if (textEl) textEl.textContent = playing ? "🎵 战歌: 开" : "🔇 战歌: 关";
     });
 
-    // 战场快捷数字键操控 (1/2/3 对应3位名将召唤/绝技释放，4/5/6/7 对应步/弓/骑/车)
+    // 战场快捷按键操控 (单人模式 1~7，双人模式 P1: 1~4/Q/W, P2: 7~0/O/P/小键盘)
     window.addEventListener("keydown", (e) => {
       if (this.gameState !== "battling") return;
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
+      if (this.isPvPMode) {
+        // P1 蓝方按键 (1, 2, 3, 4, Q, W)
+        if (e.code === "Digit1") document.getElementById("pvp-btn-p1-infantry")?.click();
+        else if (e.code === "Digit2") document.getElementById("pvp-btn-p1-archer")?.click();
+        else if (e.code === "Digit3") document.getElementById("pvp-btn-p1-cavalry")?.click();
+        else if (e.code === "Digit4") document.getElementById("pvp-btn-p1-catapult")?.click();
+        else if (e.code === "KeyQ") document.getElementById("pvp-btn-p1-guanyu")?.click();
+        else if (e.code === "KeyW") document.getElementById("pvp-btn-p1-zhaoyun")?.click();
+
+        // P2 红方按键 (7, 8, 9, 0, O, P 或小键盘)
+        else if (e.code === "Digit7" || e.code === "Numpad1") document.getElementById("pvp-btn-p2-infantry")?.click();
+        else if (e.code === "Digit8" || e.code === "Numpad2") document.getElementById("pvp-btn-p2-archer")?.click();
+        else if (e.code === "Digit9" || e.code === "Numpad3") document.getElementById("pvp-btn-p2-cavalry")?.click();
+        else if (e.code === "Digit0" || e.code === "Numpad4") document.getElementById("pvp-btn-p2-catapult")?.click();
+        else if (e.code === "KeyO" || e.code === "Numpad5") document.getElementById("pvp-btn-p2-lvbu")?.click();
+        else if (e.code === "KeyP" || e.code === "Numpad6") document.getElementById("pvp-btn-p2-caocao")?.click();
+        return;
+      }
 
       const selected = this.saveData.selectedHeroes || ["liubei", "guanyu", "zhangfei"];
       if (e.code === "Digit1" || e.code === "Numpad1") {
@@ -3267,7 +3400,9 @@ class PushWarGameApp {
           });
         }
 
-        this.updateEnemyAI();
+        if (!this.isPvPMode) {
+          this.updateEnemyAI();
+        }
         this.battle.update();
 
         if (this.battle.isGameOver) {
@@ -3308,6 +3443,36 @@ class PushWarGameApp {
 
       const redBar = document.getElementById("red-castle-hp");
       if (redBar) redBar.style.width = redRatio + "%";
+    }
+
+    if (this.isPvPMode) {
+      const pvpCardConfigs = [
+        { id: "pvp-btn-p1-infantry", cost: 50, team: "blue", hero: null },
+        { id: "pvp-btn-p1-archer", cost: 75, team: "blue", hero: null },
+        { id: "pvp-btn-p1-cavalry", cost: 120, team: "blue", hero: null },
+        { id: "pvp-btn-p1-catapult", cost: 160, team: "blue", hero: null },
+        { id: "pvp-btn-p1-guanyu", cost: 180, team: "blue", hero: "guanyu" },
+        { id: "pvp-btn-p1-zhaoyun", cost: 170, team: "blue", hero: "zhaoyun" },
+
+        { id: "pvp-btn-p2-infantry", cost: 50, team: "red", hero: null },
+        { id: "pvp-btn-p2-archer", cost: 75, team: "red", hero: null },
+        { id: "pvp-btn-p2-cavalry", cost: 120, team: "red", hero: null },
+        { id: "pvp-btn-p2-catapult", cost: 160, team: "red", hero: null },
+        { id: "pvp-btn-p2-lvbu", cost: 200, team: "red", hero: "lvbu" },
+        { id: "pvp-btn-p2-caocao", cost: 180, team: "red", hero: "caocao" }
+      ];
+
+      pvpCardConfigs.forEach(item => {
+        const btn = document.getElementById(item.id);
+        if (!btn) return;
+        const curGold = item.team === "blue" ? this.gold : this.enemyGold;
+        let canSpawn = (this.gameState === "battling") && (curGold >= item.cost);
+        if (item.hero && this.battle.isHeroAlive(item.hero, item.team)) {
+          canSpawn = false;
+        }
+        btn.disabled = !canSpawn;
+      });
+      return;
     }
 
     const isBattling = this.gameState === "battling";
@@ -3433,6 +3598,68 @@ class PushWarGameApp {
   handleGameOver() {
     this.gameState = "result";
     sound.stopBgm();
+
+    // 双人同屏对决【双雄会盟 · 同屏对决】专属结算
+    if (this.isPvPMode) {
+      const p1Won = (this.battle.redCastle && this.battle.redCastle.hp <= 0);
+      const modalBox = document.getElementById("result-dialog-box");
+      const banner = document.getElementById("result-icon-banner");
+      const title = document.getElementById("result-title");
+      const nextBtn = document.getElementById("btn-res-next-stage");
+      const retryBtn = document.getElementById("btn-res-retry-battle");
+      const mapBtn = document.getElementById("btn-res-return-map");
+
+      sound.playVictory();
+      modalBox?.classList.remove("defeat");
+      
+      if (banner) banner.textContent = p1Won ? "🟦 🏆" : "🟥 🏆";
+      if (title) title.textContent = p1Won ? "汉室威振！蓝方(P1)大捷！" : "魏武定鼎！红方(P2)大捷！";
+
+      const starRow = document.getElementById("result-star-row");
+      if (starRow) starRow.innerHTML = "<span>⚔️ 双雄会盟 · 胜负已分</span>";
+      const starLabel = document.getElementById("result-star-label");
+      if (starLabel) starLabel.textContent = p1Won 
+        ? "蓝方(P1)先破敌营，中原一统！" 
+        : "红方(P2)长驱直入，横扫千军！";
+
+      const conditionsEl = document.getElementById("result-star-conditions");
+      if (conditionsEl) conditionsEl.innerHTML = "";
+      document.getElementById("result-three-star-bonus")?.classList.add("hidden");
+
+      const lootCopperEl = document.getElementById("res-loot-copper");
+      if (lootCopperEl) lootCopperEl.textContent = `蓝方(P1)余血: ${Math.max(0, Math.floor(this.battle.blueCastle?.hp || 0))}`;
+      const lootSilverEl = document.getElementById("res-loot-silver");
+      if (lootSilverEl) lootSilverEl.textContent = `红方(P2)余血: ${Math.max(0, Math.floor(this.battle.redCastle?.hp || 0))}`;
+      const lootGoldEl = document.getElementById("res-loot-gold-ingot");
+      if (lootGoldEl) lootGoldEl.textContent = `对决时长: ${Math.floor(this.battle.battleDurationFrames / 60)} 秒`;
+      const castleHpEl = document.getElementById("res-castle-hp");
+      if (castleHpEl) castleHpEl.textContent = p1Won ? "🟦 蓝方获胜" : "🟥 红方获胜";
+
+      const equipRow = document.getElementById("res-loot-equip-row");
+      if (equipRow) equipRow.style.display = "none";
+
+      if (retryBtn) {
+        retryBtn.textContent = "再决胜负 🔄";
+        retryBtn.onclick = () => {
+          document.getElementById("battle-result-modal")?.classList.remove("open");
+          this.startPvP();
+        };
+      }
+      if (nextBtn) {
+        nextBtn.classList.remove("hidden");
+        nextBtn.textContent = "班师回朝 🏠";
+        nextBtn.onclick = () => {
+          document.getElementById("battle-result-modal")?.classList.remove("open");
+          this.switchView("title");
+        };
+      }
+      if (mapBtn) {
+        mapBtn.style.display = "none";
+      }
+
+      document.getElementById("battle-result-modal")?.classList.add("open");
+      return;
+    }
 
     // 终局挑战【铜雀演武 · 无尽试炼】专属结算
     if (this.isEndlessMode) {
