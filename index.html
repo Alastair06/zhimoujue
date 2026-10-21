@@ -232,115 +232,103 @@
     <!-- ================= 3. 战前军情布阵弹窗 (Pre-Battle Modal) ================= -->
     <div class="prebattle-modal" id="prebattle-modal">
       <div class="prebattle-dialog-box">
+        <!-- 弹窗右上角常驻返回/关闭按钮 -->
+        <button class="btn-prebattle-close-corner" id="btn-prebattle-close-corner" title="返回上一页">✕</button>
+
         <div class="prebattle-header">
           <div>
-            <h2 class="prebattle-title" id="pre-stage-title">【第一章】桃园结义 · 涿郡起兵破黄巾</h2>
-            <p class="prebattle-sub" id="pre-stage-sub">公元184年 · 刘关张桃园三结义，讨伐黄巾贼首程远志！</p>
+            <h2 class="prebattle-title" id="pre-stage-title">【第一章】桃园结义</h2>
+            <p class="prebattle-sub" id="pre-stage-sub">公元184年 · 讨伐黄巾首战</p>
           </div>
           <div class="prebattle-avatar-enemy" id="pre-stage-avatar">🦹</div>
         </div>
 
         <div class="prebattle-body">
-          <!-- 战役目标指示 -->
-          <div class="prebattle-objective-box" id="prebattle-objective-box" style="background:#fef2f2; border:2px solid #ef4444; border-radius:10px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; gap:12px;">
-            <div style="font-size:1.8rem;" id="pre-obj-icon">🎯</div>
-            <div style="flex:1;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span style="background:#dc2626; color:#fff; font-size:0.75rem; font-weight:900; padding:2px 8px; border-radius:4px;" id="pre-obj-badge">战役目标</span>
-                <strong style="color:#991b1b; font-size:1.05rem;" id="pre-obj-title">攻城破寨</strong>
-              </div>
-              <div style="font-size:0.85rem; color:#7f1d1d; margin-top:2px;" id="pre-obj-desc">击溃黄巾贼寨大营！</div>
+          <!-- 极简军情与目标指示横条 (合并原冗长目标与敌情卡片) -->
+          <div class="prebattle-info-banner">
+            <div class="info-banner-left">
+              <span class="info-badge" id="pre-obj-badge">战役目标</span>
+              <strong id="pre-obj-title">攻城破寨</strong>
+              <span class="info-sep">·</span>
+              <span class="info-sub" id="pre-obj-desc">击溃敌寨大营</span>
+            </div>
+            <div class="info-banner-right">
+              <span class="intel-badge" id="pre-enemy-hp-badge">敌寨血量: 1300</span>
+              <span id="pre-enemy-types" style="display:none;"></span>
+              <span id="pre-strategy-tip" style="display:none;"></span>
             </div>
           </div>
 
-          <!-- 出战名将编队选择 (最多选3员大将) -->
-          <div class="squad-deploy-box" style="background:#f8fafc; border:2px solid #cbd5e1; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <!-- 出战名将编队选择 -->
+          <div class="squad-deploy-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <span style="font-weight:900; color:#1e293b; font-size:0.95rem;">
-                ⚔️ 出战名将编队 <span style="font-size:0.8rem; font-weight:normal; color:#64748b;">(出征亲帅至多 3 员大将)</span>
+                ⚔️ 出战名将
               </span>
-              <span class="squad-counter-pill" id="squad-counter-pill" style="background:#dbeafe; color:#1e40af; font-size:0.8rem; font-weight:900; padding:2px 8px; border-radius:12px;">已遣 3 / 3</span>
+              <span class="squad-counter-pill" id="squad-counter-pill">3 / 3</span>
             </div>
             
             <!-- 3 大主将卡槽 (Slot 1, 2, 3) -->
-            <div class="squad-slots-grid" id="pre-squad-slots" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:10px;">
+            <div class="squad-slots-grid" id="pre-squad-slots">
               <!-- 槽位由 JS 动态生成 -->
             </div>
 
             <!-- 可选名将名册与阵营筛选 -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <div style="font-size:0.8rem; color:#475569; font-weight:bold;">主公麾下名将库 (点击入阵/卸任):</div>
-              <div class="roster-camp-filter-bar" id="roster-camp-filter-bar" style="display:flex; gap:4px;">
-                <button class="roster-camp-btn active" data-camp="all" style="font-size:0.72rem; padding:2px 7px; border-radius:4px; border:1px solid #94a3b8; background:#3b82f6; color:#fff; font-weight:bold; cursor:pointer;">全部</button>
-                <button class="roster-camp-btn" data-camp="shu" style="font-size:0.72rem; padding:2px 7px; border-radius:4px; border:1px solid #86efac; background:#f0fdf4; color:#16a34a; font-weight:bold; cursor:pointer;">🟢 蜀</button>
-                <button class="roster-camp-btn" data-camp="wu" style="font-size:0.72rem; padding:2px 7px; border-radius:4px; border:1px solid #7dd3fc; background:#f0f9ff; color:#0284c7; font-weight:bold; cursor:pointer;">🔵 吴</button>
-                <button class="roster-camp-btn" data-camp="wei" style="font-size:0.72rem; padding:2px 7px; border-radius:4px; border:1px solid #d8b4fe; background:#faf5ff; color:#7e22ce; font-weight:bold; cursor:pointer;">🔴 魏</button>
-                <button class="roster-camp-btn" data-camp="qun" style="font-size:0.72rem; padding:2px 7px; border-radius:4px; border:1px solid #fed7aa; background:#fff7ed; color:#ea580c; font-weight:bold; cursor:pointer;">🟡 群</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:8px 0 6px 0;">
+              <div style="font-size:0.8rem; color:#475569; font-weight:bold;">待命名将</div>
+              <div class="roster-camp-filter-bar" id="roster-camp-filter-bar">
+                <button class="roster-camp-btn active" data-camp="all">全部</button>
+                <button class="roster-camp-btn" data-camp="shu">🟢 蜀</button>
+                <button class="roster-camp-btn" data-camp="wu">🔵 吴</button>
+                <button class="roster-camp-btn" data-camp="wei">🔴 魏</button>
+                <button class="roster-camp-btn" data-camp="qun">🟡 群</button>
               </div>
             </div>
-            <div class="squad-roster-list" id="pre-squad-roster" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:6px;">
+            <div class="squad-roster-list" id="pre-squad-roster">
               <!-- 动态名将小头像卡片由 JS 生成 -->
             </div>
 
-            <!-- 阵营与激活羁绊展示栏 -->
-            <div class="pre-squad-synergy-section" id="pre-squad-synergies-section" style="margin-top:10px; padding-top:8px; border-top:1px dashed #cbd5e1;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span style="font-size:0.82rem; font-weight:800; color:#334155; display:flex; align-items:center; gap:4px;">
-                  <span>✨</span><span>当前编队激活羁绊与阵营底色:</span>
+            <!-- 激活羁绊徽章展示 -->
+            <div class="pre-squad-synergy-section" id="pre-squad-synergies-section">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:0.8rem; font-weight:800; color:#334155; display:flex; align-items:center; gap:4px;">
+                  <span>✨ 激活羁绊</span>
                 </span>
-                <span id="pre-squad-cost-pill" style="font-size:0.75rem; color:#64748b; font-weight:bold; background:#e2e8f0; padding:2px 8px; border-radius:10px;">总召唤耗资: 585 🪙</span>
+                <span id="pre-squad-cost-pill">耗资: 585 🪙</span>
               </div>
-              <div class="pre-squad-synergies-list" id="pre-squad-synergies" style="display:flex; flex-wrap:wrap; gap:6px;">
+              <div class="pre-squad-synergies-list" id="pre-squad-synergies">
                 <!-- 动态生成羁绊徽章 -->
               </div>
             </div>
           </div>
 
-          <!-- 敌情报告 -->
-          <div class="intel-card">
-            <div class="intel-card-header">
-              <span><img src="assets/ui/flag_red.png" class="ui-icon-nano" alt="敌旗" /> 敌情刺探</span>
-              <span class="intel-badge" id="pre-enemy-hp-badge">敌寨血量: 1300</span>
+          <!-- 战前铜钱军策投资 (精简紧凑版) -->
+          <div class="prebattle-invest-box">
+            <div class="invest-title-row">
+              <span style="font-weight:900; color:#b45309; font-size:0.88rem;">
+                <img src="assets/ui/coin_copper.png" class="ui-icon-xs" alt="铜钱" /> 战前军策 (铜钱: <strong id="pre-invest-copper-display" style="color:#d97706;">1000</strong>)
+              </span>
             </div>
-            <div class="intel-content" id="pre-enemy-types">敌军主力：黄巾乱民、草寇长弓手</div>
-          </div>
-
-          <!-- 破敌锦囊 -->
-          <div class="strategy-card">
-            <div class="strategy-header">
-              <img src="assets/ui/icon_box_scroll.png" class="ui-icon-sm" alt="锦囊" />
-              <span style="font-weight:900; color:#0284c7;">大哥刘备 · 阵前破敌锦囊</span>
-            </div>
-            <p class="strategy-tip-text" id="pre-strategy-tip">
-              黄巾初起，贼兵散乱！主公传令：派【坚盾步兵】列阵在前举盾御矢，二弟关羽、三弟张飞率后排【连弩弓手】齐射；若敌军猬集成群，可引机关烈火雷【定点轰炸破其阵脚】！
-            </p>
-          </div>
-
-          <!-- 战前铜钱军策投资 -->
-          <div class="prebattle-invest-box" style="background:#fffbeb; border:2px solid #f59e0b; border-radius:12px; padding:12px; margin-top:12px;">
-            <div class="invest-title-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-weight:900; color:#b45309; font-size:0.95rem;"><img src="assets/ui/coin_copper.png" class="ui-icon-xs" alt="铜钱" /> 阵前重金募勇 (可用国库铜钱: <strong id="pre-invest-copper-display" style="color:#d97706;">1000</strong>)</span>
-            </div>
-            <div class="invest-options-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
-              <label class="invest-option-card" id="card-invest-gold" style="background:#fff; border:2px solid #e2e8f0; border-radius:8px; padding:8px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" id="chk-invest-gold" style="width:18px; height:18px; cursor:pointer;">
+            <div class="invest-options-grid">
+              <label class="invest-option-card" id="card-invest-gold">
+                <input type="checkbox" id="chk-invest-gold">
                 <div class="invest-card-content">
-                  <div class="invest-name" style="font-size:0.82rem; font-weight:800; color:#1e293b;"><img src="assets/ui/coin_gold.png" class="ui-icon-nano" alt="金币" /> 重金开局</div>
-                  <div class="invest-cost" style="font-size:0.75rem; color:#b45309;">+150 启动资金 (150<img src="assets/ui/coin_copper.png" class="ui-icon-nano" />)</div>
+                  <div class="invest-name">🪙 +150 启动金</div>
+                  <div class="invest-cost">150 铜钱</div>
                 </div>
               </label>
-              <label class="invest-option-card" id="card-invest-farm" style="background:#fff; border:2px solid #e2e8f0; border-radius:8px; padding:8px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" id="chk-invest-farm" style="width:18px; height:18px; cursor:pointer;">
+              <label class="invest-option-card" id="card-invest-farm">
+                <input type="checkbox" id="chk-invest-farm">
                 <div class="invest-card-content">
-                  <div class="invest-name" style="font-size:0.82rem; font-weight:800; color:#1e293b;">🌾 急速屯田</div>
-                  <div class="invest-cost" style="font-size:0.75rem; color:#b45309;">本局产速+50% (120<img src="assets/ui/coin_copper.png" class="ui-icon-nano" />)</div>
+                  <div class="invest-name">🌾 急速屯田</div>
+                  <div class="invest-cost">120 铜钱</div>
                 </div>
               </label>
-              <label class="invest-option-card" id="card-invest-catapult" style="background:#fff; border:2px solid #e2e8f0; border-radius:8px; padding:8px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" id="chk-invest-catapult" style="width:18px; height:18px; cursor:pointer;">
+              <label class="invest-option-card" id="card-invest-catapult">
+                <input type="checkbox" id="chk-invest-catapult">
                 <div class="invest-card-content">
-                  <div class="invest-name" style="font-size:0.82rem; font-weight:800; color:#1e293b;"><img src="assets/ui/catapult.png" class="ui-icon-nano" alt="投石机" /> 器械先行</div>
-                  <div class="invest-cost" style="font-size:0.75rem; color:#b45309;">开局送投石车 (180<img src="assets/ui/coin_copper.png" class="ui-icon-nano" />)</div>
+                  <div class="invest-name">🚜 投石巨车</div>
+                  <div class="invest-cost">180 铜钱</div>
                 </div>
               </label>
             </div>
@@ -348,9 +336,9 @@
         </div>
 
         <div class="prebattle-footer">
-          <button class="btn-cancel-march" id="btn-prebattle-cancel">返回地图</button>
+          <button class="btn-cancel-march" id="btn-prebattle-cancel">⬅️ 返回</button>
           <button class="btn-start-war" id="btn-prebattle-start">
-            <img src="assets/ui/icon_box_sword.png" class="ui-icon-nano" alt="出击" /> 敲响战鼓 · 全军出击！
+            <img src="assets/ui/icon_box_sword.png" class="ui-icon-nano" alt="出击" /> 全军出击！
           </button>
         </div>
       </div>

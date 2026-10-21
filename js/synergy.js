@@ -376,7 +376,8 @@ export const CAMP_RESONANCES = {
       name: "蜀汉 · 仁义先锋",
       camp: "shu",
       icon: "🟢",
-      desc: "全军士兵生命上限 +6%。",
+      desc: "全军士兵生命上限 +6%",
+      shortBonus: "全军生命+6%",
       buffs: { armyHpMult: 0.06 }
     },
     3: {
@@ -384,7 +385,8 @@ export const CAMP_RESONANCES = {
       name: "蜀汉 · 仁德兴邦",
       camp: "shu",
       icon: "🟢",
-      desc: "全军士兵生命上限 +12%，且出战蜀将在阵亡时返还 20% 召唤耗资（降低断兵容错率）。",
+      desc: "全军生命+12%，蜀将阵亡返还20%耗资",
+      shortBonus: "全军生命+12%，阵亡返资20%",
       buffs: { armyHpMult: 0.12, deathRefundRatio: 0.20 }
     }
   },
@@ -394,7 +396,8 @@ export const CAMP_RESONANCES = {
       name: "东吴 · 疾行水军",
       camp: "wu",
       icon: "🔵",
-      desc: "全军移速 +8%，弓箭手攻击轻微点燃（每秒造成 10 点固定灼烧伤害，持续 3 秒）。",
+      desc: "全军移速+8%，弓兵附带灼烧",
+      shortBonus: "全军移速+8%，弓手灼烧",
       buffs: { armySpeedMult: 0.08, archerBurnDmg: 10 }
     },
     3: {
@@ -402,7 +405,8 @@ export const CAMP_RESONANCES = {
       name: "东吴 · 水陆铁壁",
       camp: "wu",
       icon: "🔵",
-      desc: "全军移速 +15%，弓箭手点燃伤害翻倍至 20 点/秒，攻城器械防御提升 15%。",
+      desc: "全军移速+15%，弓兵灼烧翻倍，器械防御+15%",
+      shortBonus: "移速+15%，灼烧翻倍，器械防御+15%",
       buffs: { armySpeedMult: 0.15, archerBurnDmg: 20, siegeDefenseBonus: 0.15 }
     }
   },
@@ -412,7 +416,8 @@ export const CAMP_RESONANCES = {
       name: "曹魏 · 铁壁先锋",
       camp: "wei",
       icon: "🔴",
-      desc: "全军护甲 +8%。",
+      desc: "全军护甲 +8%",
+      shortBonus: "全军护甲+8%",
       buffs: { armyDefMult: 0.08 }
     },
     3: {
@@ -420,7 +425,8 @@ export const CAMP_RESONANCES = {
       name: "曹魏 · 铁血霸业",
       camp: "wei",
       icon: "🔴",
-      desc: "全军护甲 +15%，重骑兵冲击伤害额外提升 12%。",
+      desc: "全军护甲+15%，重骑冲击伤害+12%",
+      shortBonus: "全军护甲+15%，重骑增伤12%",
       buffs: { armyDefMult: 0.15, cavalryChargeDmgBonus: 0.12 }
     }
   },
@@ -430,7 +436,8 @@ export const CAMP_RESONANCES = {
       name: "群雄 · 割据义勇",
       camp: "qun",
       icon: "🟡",
-      desc: "出战武将登场时立刻获得 30 点初始士气/怒气。",
+      desc: "出战武将登场获得 30 点初始士气",
+      shortBonus: "登场初始士气+30",
       buffs: { initialHeroMorale: 30 }
     },
     3: {
@@ -438,7 +445,8 @@ export const CAMP_RESONANCES = {
       name: "群雄 · 逐鹿乱世",
       camp: "qun",
       icon: "🟡",
-      desc: "武将击杀小兵回复 5 点士气，出战武将技能冷却缩减 8%。",
+      desc: "击杀小兵回复5点士气，技能冷却缩减8%",
+      shortBonus: "击杀回士气，技能冷却-8%",
       buffs: { initialHeroMorale: 30, killMoraleGain: 5, heroCooldownReduction: 0.08 }
     }
   }

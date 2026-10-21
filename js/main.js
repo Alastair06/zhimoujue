@@ -1301,11 +1301,11 @@ class PushWarGameApp {
             <img src="${meta.avatar}" alt="${meta.name}" class="squad-slot-avatar" />
             <div class="squad-slot-name">${meta.name}</div>
             <div style="font-size:0.7rem; color:#64748b; margin-top:1px;"><span class="squad-camp-badge camp-tag-${camp}">${campName}</span></div>
-            <div class="squad-slot-remove-tag">✕ 点击卸任</div>
+            <div class="squad-slot-remove-tag">换下</div>
           `;
           slotCard.onclick = () => {
             if (this.saveData.selectedHeroes.length <= 1) {
-              showToast("⚠️ 出征大军需至少派遣 1 员大将领军！", "error");
+              showToast("至少需派遣 1 员大将领军！", "error");
               return;
             }
             this.saveData.selectedHeroes = this.saveData.selectedHeroes.filter(h => h !== heroId);
@@ -1315,8 +1315,7 @@ class PushWarGameApp {
           };
         } else {
           slotCard.innerHTML = `
-            <div class="squad-slot-empty-title">➕ 待遣主将</div>
-            <div class="squad-slot-empty-hint">点击下方名册遣将</div>
+            <div class="squad-slot-empty-title">➕ 待遣大将</div>
           `;
         }
         slotsEl.appendChild(slotCard);
@@ -1329,23 +1328,25 @@ class PushWarGameApp {
 
     const costPill = document.getElementById("pre-squad-cost-pill");
     if (costPill) {
-      costPill.textContent = `总召唤耗资: ${totalCost} 🪙`;
+      costPill.textContent = `耗资: ${totalCost} 🪙`;
     }
 
     const synEl = document.getElementById("pre-squad-synergies");
     if (synEl) {
       synEl.innerHTML = "";
       if (activeSynergies.length === 0) {
-        synEl.innerHTML = `<span style="font-size:0.75rem; color:#94a3b8; padding:4px 0;">暂未激活羁绊（搭配同国武将或历史渊源大将可激活阵营共鸣与终极神技）</span>`;
+        synEl.innerHTML = `<span style="font-size:0.75rem; color:#94a3b8; padding:2px 0;">暂无羁绊</span>`;
       } else {
         activeSynergies.forEach(syn => {
           const badge = document.createElement("div");
           badge.className = `synergy-pill-badge ${syn.category}`;
           badge.title = syn.desc;
+          // 只保留简短精炼的核心效果
+          const cleanBonus = (syn.shortBonus || syn.desc || '').split(/[，,]/)[0];
           badge.innerHTML = `
             <span>${syn.icon}</span>
             <strong>${syn.name}</strong>
-            <span class="synergy-short-desc">${syn.shortBonus || syn.desc}</span>
+            <span class="synergy-short-desc">${cleanBonus}</span>
           `;
           synEl.appendChild(badge);
         });
@@ -1374,7 +1375,7 @@ class PushWarGameApp {
       });
 
       if (displayList.length === 0) {
-        rosterEl.innerHTML = `<span style="font-size:0.75rem; color:#94a3b8; padding:8px;">暂无该阵营待命武将（随战役深入可纳降收编）</span>`;
+        rosterEl.innerHTML = `<span style="font-size:0.75rem; color:#94a3b8; padding:4px;">暂无待命武将</span>`;
       }
 
       displayList.forEach(heroId => {
@@ -1390,13 +1391,13 @@ class PushWarGameApp {
           <img src="${meta.avatar}" alt="${meta.name}" class="squad-roster-pill-img" />
           <span class="squad-camp-badge camp-tag-${camp}">${campName}</span>
           <span class="squad-roster-pill-name">${meta.name}</span>
-          <span class="squad-roster-pill-badge">${isSelected ? "已出战" : "待命"}</span>
+          <span class="squad-roster-pill-badge">${isSelected ? "出战" : "待命"}</span>
         `;
 
         pillBtn.onclick = () => {
           if (isSelected) {
             if (this.saveData.selectedHeroes.length <= 1) {
-              showToast("⚠️ 出征大军需至少派遣 1 员大将领军！", "error");
+              showToast("至少需派遣 1 员大将领军！", "error");
               return;
             }
             this.saveData.selectedHeroes = this.saveData.selectedHeroes.filter(h => h !== heroId);
@@ -1405,7 +1406,7 @@ class PushWarGameApp {
             this.renderPreBattleSquadUI();
           } else {
             if (this.saveData.selectedHeroes.length >= 3) {
-              showToast("⚠️ 出战名将至多 3 员！请先在上方卡槽换下大将！", "error");
+              showToast("出战名将已满 3 员，请先换下大将！", "error");
               return;
             }
             this.saveData.selectedHeroes.push(heroId);
@@ -1990,8 +1991,26 @@ class PushWarGameApp {
     });
 
     // 战前布阵弹窗
-    document.getElementById("btn-prebattle-cancel")?.addEventListener("click", () => {
-      document.getElementById("prebattle-modal")?.classList.remove("open");
+    const prebattleModal = document.getElementById("prebattle-modal");
+    const closePrebattle = () => {
+      prebattleModal?.classList.remove("open");
+    };
+
+    document.getElementById("btn-prebattle-cancel")?.addEventListener("click", closePrebattle);
+    document.getElementById("btn-prebattle-close-corner")?.addEventListener("click", closePrebattle);
+
+    prebattleModal?.addEventListener("click", (e) => {
+      if (e.target === prebattleModal) {
+        closePrebattle();
+      }
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" || e.key === "Esc") {
+        if (prebattleModal && prebattleModal.classList.contains("open")) {
+          closePrebattle();
+        }
+      }
     });
 
     document.getElementById("btn-prebattle-start")?.addEventListener("click", () => {
