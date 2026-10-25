@@ -4053,6 +4053,19 @@ class PushWarGameApp {
     acceptBtn.disabled = !allMet;
     acceptBtn.textContent = allMet ? `🤝 备厚礼纳降 · 收入麾下！` : `归顺条件未满足 (需积攒功勋或财帛)`;
 
+    const closeModal = () => {
+      modal.classList.remove("open");
+      modal.classList.remove("hidden"); // 确保不继承 .hidden 的 pointer-events: none
+      if (modal._escHandler) {
+        window.removeEventListener("keydown", modal._escHandler);
+        modal._escHandler = null;
+      }
+      modal.onclick = null;
+      if (this.canvas) {
+        this.canvas.style.cursor = "";
+      }
+    };
+
     acceptBtn.onclick = () => {
       if (!allMet) return;
       if (reqs.copperCost) this.saveData.copper -= reqs.copperCost;
@@ -4073,18 +4086,53 @@ class PushWarGameApp {
       sound.playVictory();
       showToast(`🎉 成功纳降名将【${cond.name}】！已编入大军名将库！`, "success");
 
-      modal.classList.remove("open");
+      closeModal();
       if (onDone) onDone();
     };
 
     const jailBtn = document.getElementById("btn-recruit-jail");
-    jailBtn.onclick = () => {
-      modal.classList.remove("open");
-      showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
-      if (onDone) onDone();
+    if (jailBtn) {
+      jailBtn.onclick = () => {
+        closeModal();
+        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
+        if (onDone) onDone();
+      };
+    }
+
+    const closeCornerBtn = document.getElementById("btn-recruit-close-corner");
+    if (closeCornerBtn) {
+      closeCornerBtn.onclick = () => {
+        closeModal();
+        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
+        if (onDone) onDone();
+      };
+    }
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        closeModal();
+        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
+        if (onDone) onDone();
+      }
     };
 
+    if (modal._escHandler) {
+      window.removeEventListener("keydown", modal._escHandler);
+    }
+    modal._escHandler = (e) => {
+      if (e.key === "Escape" || e.key === "Esc") {
+        closeModal();
+        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
+        if (onDone) onDone();
+      }
+    };
+    window.addEventListener("keydown", modal._escHandler);
+
+    modal.classList.remove("hidden");
     modal.classList.add("open");
+    if (this.canvas) {
+      this.canvas.style.cursor = "default";
+    }
   }
 }
 

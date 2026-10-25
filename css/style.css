@@ -2421,6 +2421,14 @@ html, body {
 }
 
 /* ================= 阵前生擒 · 纳降归顺弹窗 (Hero Recruitment Modal) ================= */
+.game-modal-backdrop {
+  pointer-events: none;
+}
+
+.game-modal-backdrop.open {
+  pointer-events: auto !important;
+}
+
 #modal-recruit-hero {
   display: none;
   position: fixed;
@@ -2431,10 +2439,14 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  pointer-events: none;
+  cursor: default;
 }
 
 #modal-recruit-hero.open {
   display: flex !important;
+  pointer-events: auto !important;
+  cursor: default;
 }
 
 .recruit-modal-box {
@@ -2445,10 +2457,41 @@ html, body {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 16px 22px 20px 22px;
+  padding: 18px 22px 20px 22px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
   position: relative;
   animation: pop-bounce 0.22s ease-out;
+  pointer-events: auto !important;
+  cursor: default;
+  user-select: none;
+}
+
+.btn-recruit-close-corner {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
+  font-size: 1.15rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.btn-recruit-close-corner:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+  transform: scale(1.08);
 }
 
 .recruit-header {
@@ -2509,6 +2552,9 @@ html, body {
   image-rendering: pixelated;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
   margin-bottom: 6px;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .recruit-job-tag {
