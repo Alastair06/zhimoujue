@@ -216,6 +216,42 @@ class SaveManager {
     if (!recruited.includes("guanyu")) recruited.push("guanyu");
     if (!recruited.includes("zhangfei")) recruited.push("zhangfei");
 
+    let jailed = (raw?.jailedHeroes && Array.isArray(raw.jailedHeroes)) ? [...raw.jailedHeroes] : [];
+
+    // 关卡通关与战役进度自动纳降关联 (击破章节敌将后收录麾下)
+    const chapterRewardMap = {
+      1: "zhangjiao",     // 第一章击溃黄巾收降张角
+      2: "diaochan",      // 第二章破董卓吕布收降貂蝉
+      3: "taishici",      // 第三章平江东收降太史慈
+      4: "xiahoudun",     // 第四章破曹魏前锋收降夏侯惇
+      5: "jiling",        // 第五章收降纪灵
+      6: "dongzhuo",      // 第六章收降董卓
+      7: "yanliang",      // 第七章收降颜良
+      8: "wenchou",       // 第八章收降文丑
+      9: "zhugeliang",    // 第九章收降卧龙诸葛亮
+      10: "zhaoyun"       // 第十章收降常胜赵云
+    };
+
+    const shuProgress = (factionProgress && factionProgress.shu) || raw?.unlockedChapter || 1;
+    const shuStars = (factionChapterStars && factionChapterStars.shu) || raw?.chapterStars || {};
+    const totalStarsCount = Object.values(shuStars).reduce((sum, v) => sum + (v || 0), 0);
+
+    for (const [chStr, heroId] of Object.entries(chapterRewardMap)) {
+      const chNum = parseInt(chStr, 10);
+      let passed = false;
+      if (shuProgress > chNum) passed = true;
+      if (shuStars[chNum] && shuStars[chNum] > 0) passed = true;
+      if (chNum === 1 && (totalStarsCount >= 3 || shuProgress >= 2)) passed = true;
+      if (chNum === 2 && (totalStarsCount >= 5 || shuProgress >= 3)) passed = true;
+
+      if (passed && !recruited.includes(heroId)) {
+        recruited.push(heroId);
+      }
+    }
+
+    // 确保已收录武将不再保留在天牢列表
+    jailed = jailed.filter(id => !recruited.includes(id));
+
     let selected = (raw?.selectedHeroes && Array.isArray(raw.selectedHeroes) && raw.selectedHeroes.length > 0) 
       ? raw.selectedHeroes.filter(h => recruited.includes(h)).slice(0, 3) 
       : ["liubei", "guanyu", "zhangfei"];
@@ -232,6 +268,7 @@ class SaveManager {
       silver: (raw && raw.silver !== undefined) ? raw.silver : 400,
       goldIngots: (raw && raw.goldIngots !== undefined) ? raw.goldIngots : 50,
       recruitedHeroes: recruited,
+      jailedHeroes: jailed,
       selectedHeroes: selected,
       upgrades: {
         infantryHp: 0,
@@ -3038,7 +3075,7 @@ class PushWarGameApp {
     }
   }
 
-  // 渲染萌将与兵种图鉴
+  // 渲染名将录与兵种图鉴
   renderGalleryView() {
     const listEl = document.getElementById("gallery-sidebar-list");
     if (!listEl) return;
@@ -3047,11 +3084,10 @@ class PushWarGameApp {
       this.galleryFilterCamp = 'all';
     }
 
-    // 更新收录总数徽章
-    const pill = document.getElementById("gal-total-count-pill");
-    if (pill) {
-      pill.textContent = `📚 已收录图鉴: ${GENERALS_ARCHIVE.length} / ${GENERALS_ARCHIVE.length}`;
-    }
+    // 重新从本地存储加载最新存档，确保收录名单即时同步
+    this.saveData = SaveManager.load();
+
+    this.updateGalleryCountPill();
 
     // 绑定阵营标签点击事件
     const filterBtns = document.querySelectorAll(".gal-camp-btn");
@@ -3067,11 +3103,27 @@ class PushWarGameApp {
         btn.style.background = "#3b82f6";
         btn.style.color = "#ffffff";
         this.galleryFilterCamp = btn.dataset.galCamp || 'all';
+        this.updateGalleryCountPill();
         this.renderGalleryList();
       };
     });
 
     this.renderGalleryList();
+  }
+
+  // 动态更新右上角真实收录统计 (40大名将真实收录统计)
+  updateGalleryCountPill() {
+    const pill = document.getElementById("gal-total-count-pill");
+    if (!pill) return;
+    const recruited = this.saveData.recruitedHeroes || ["liubei", "guanyu", "zhangfei"];
+    const namedGenerals = GENERALS_ARCHIVE.filter(g => g.camp && ['shu', 'wei', 'wu', 'qun'].includes(g.camp));
+    const recruitedGeneralsCount = recruited.filter(id => namedGenerals.some(g => g.id === id)).length;
+
+    if (this.galleryFilterCamp === 'other') {
+      pill.textContent = `🏹 已收录兵种: 14 / 14`;
+    } else {
+      pill.textContent = `📚 已收录名将: ${recruitedGeneralsCount} / ${namedGenerals.length || 40}`;
+    }
   }
 
   renderGalleryList() {
@@ -3085,16 +3137,35 @@ class PushWarGameApp {
       return gen.camp === camp;
     });
 
+    const recruited = this.saveData.recruitedHeroes || ["liubei", "guanyu", "zhangfei"];
+    const jailed = this.saveData.jailedHeroes || [];
+
     listEl.innerHTML = "";
     filtered.forEach((gen, idx) => {
+      const isNamedGeneral = Boolean(gen.camp && ['shu', 'wei', 'wu', 'qun'].includes(gen.camp));
+      const isRecruited = isNamedGeneral ? recruited.includes(gen.id) : true;
+      const isJailed = isNamedGeneral ? jailed.includes(gen.id) : false;
+
       const card = document.createElement("div");
-      card.className = `gal-nav-card ${idx === 0 ? 'active' : ''}`;
+      card.className = `gal-nav-card ${isRecruited ? 'is-recruited' : (isJailed ? 'is-jailed' : 'is-locked')} ${idx === 0 ? 'active' : ''}`;
       const iconHtml = gen.image ? `<img src="${gen.image}" class="gal-nav-img" alt="${gen.name}" />` : gen.icon;
+
+      const statusBadgeHtml = isNamedGeneral
+        ? (isRecruited 
+            ? `<span class="gal-status-pill recruited">已收录</span>`
+            : (isJailed 
+                ? `<span class="gal-status-pill jailed">已生擒</span>`
+                : `<span class="gal-status-pill locked">未收录</span>`))
+        : `<span class="gal-status-pill recruited">常用</span>`;
+
       card.innerHTML = `
         <span class="gal-nav-icon">${iconHtml}</span>
-        <div>
-          <div class="gal-nav-name">${gen.name}</div>
-          <div class="gal-nav-tag">${gen.title.split(" · ")[0]}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="gal-nav-name">${gen.name}</div>
+            ${statusBadgeHtml}
+          </div>
+          <div class="gal-nav-tag">${gen.title ? gen.title.split(" · ")[0] : (gen.camp || '兵种')}</div>
         </div>
       `;
 
@@ -3137,24 +3208,37 @@ class PushWarGameApp {
     document.getElementById("gal-counter").textContent = gen.counter;
     document.getElementById("gal-story").textContent = gen.story;
 
-    // 礼聘招贤状态展示与招降弹窗联动
+    // 礼聘招贤与生擒纳降状态展示
     const statusText = document.getElementById("gal-recruit-status-text");
     const recruitBtn = document.getElementById("btn-gal-recruit");
     if (statusText && recruitBtn) {
       const recruited = this.saveData.recruitedHeroes || ["liubei", "guanyu", "zhangfei"];
-      const isRecruited = recruited.includes(gen.id);
+      const jailed = this.saveData.jailedHeroes || [];
+      const isNamedGeneral = Boolean(gen.camp && ['shu', 'wei', 'wu', 'qun'].includes(gen.camp));
+      const isRecruited = isNamedGeneral ? recruited.includes(gen.id) : true;
+      const isJailed = isNamedGeneral ? jailed.includes(gen.id) : false;
       const cond = RECRUIT_CONDITIONS[gen.id];
 
       if (isRecruited) {
-        statusText.innerHTML = `<span style="color:#10b981; font-weight:bold; font-size:0.92rem;">🎖️ 已在麾下效命</span>`;
+        statusText.innerHTML = `<span style="color:#16a34a; font-weight:bold; font-size:0.92rem;">🎖️ 已在麾下效命（可直接编队出征）</span>`;
         recruitBtn.style.display = "none";
+      } else if (isJailed) {
+        statusText.innerHTML = `<span style="color:#b45309; font-weight:bold; font-size:0.92rem;">⛓️ 战役已生擒暂押天牢 · 随时可招纳归顺</span>`;
+        recruitBtn.style.display = "inline-flex";
+        recruitBtn.textContent = `🤝 招纳归顺 (${gen.name})`;
+        recruitBtn.onclick = () => {
+          this.openRecruitModal(gen.id, () => {
+            this.renderGalleryView();
+            this.renderPreBattleSquadUI();
+          });
+        };
       } else if (cond) {
-        statusText.innerHTML = `<span style="color:#d97706; font-size:0.88rem;">📜 隐居羁旅 · 待明主厚礼相聘</span>`;
+        statusText.innerHTML = `<span style="color:#64748b; font-size:0.88rem;">📜 战役未收录 · 通关对应章节生擒或厚礼相聘</span>`;
         recruitBtn.style.display = "inline-flex";
         recruitBtn.textContent = `🤝 礼聘招贤 (${cond.name})`;
         recruitBtn.onclick = () => {
           this.openRecruitModal(gen.id, () => {
-            this.selectGalleryItem(gen);
+            this.renderGalleryView();
             this.renderPreBattleSquadUI();
           });
         };
@@ -4076,6 +4160,9 @@ class PushWarGameApp {
       if (!this.saveData.recruitedHeroes.includes(heroId)) {
         this.saveData.recruitedHeroes.push(heroId);
       }
+      if (this.saveData.jailedHeroes) {
+        this.saveData.jailedHeroes = this.saveData.jailedHeroes.filter(id => id !== heroId);
+      }
 
       // 若当前编队未满 3 人，可自动选拔入阵
       if (this.saveData.selectedHeroes && this.saveData.selectedHeroes.length < 3 && !this.saveData.selectedHeroes.includes(heroId)) {
@@ -4090,41 +4177,33 @@ class PushWarGameApp {
       if (onDone) onDone();
     };
 
+    const handleJail = () => {
+      if (!this.saveData.jailedHeroes) this.saveData.jailedHeroes = [];
+      const recruited = this.saveData.recruitedHeroes || [];
+      if (!this.saveData.jailedHeroes.includes(heroId) && !recruited.includes(heroId)) {
+        this.saveData.jailedHeroes.push(heroId);
+        SaveManager.save(this.saveData);
+      }
+      closeModal();
+      showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将录随时纳降！`, "info");
+      if (onDone) onDone();
+    };
+
     const jailBtn = document.getElementById("btn-recruit-jail");
-    if (jailBtn) {
-      jailBtn.onclick = () => {
-        closeModal();
-        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
-        if (onDone) onDone();
-      };
-    }
+    if (jailBtn) jailBtn.onclick = handleJail;
 
     const closeCornerBtn = document.getElementById("btn-recruit-close-corner");
-    if (closeCornerBtn) {
-      closeCornerBtn.onclick = () => {
-        closeModal();
-        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
-        if (onDone) onDone();
-      };
-    }
+    if (closeCornerBtn) closeCornerBtn.onclick = handleJail;
 
     modal.onclick = (e) => {
-      if (e.target === modal) {
-        closeModal();
-        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
-        if (onDone) onDone();
-      }
+      if (e.target === modal) handleJail();
     };
 
     if (modal._escHandler) {
       window.removeEventListener("keydown", modal._escHandler);
     }
     modal._escHandler = (e) => {
-      if (e.key === "Escape" || e.key === "Esc") {
-        closeModal();
-        showToast(`⛓️ 已将【${cond.name}】暂押天牢，日后可于名将谱随时纳降！`, "info");
-        if (onDone) onDone();
-      }
+      if (e.key === "Escape" || e.key === "Esc") handleJail();
     };
     window.addEventListener("keydown", modal._escHandler);
 

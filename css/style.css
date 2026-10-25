@@ -1789,13 +1789,77 @@ html, body {
   gap: 12px;
   cursor: pointer;
   box-shadow: 0 3px 0 #94a3b8;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: all 0.15s ease;
 }
 
-.gal-nav-card.active { border-color: #f59e0b; background: #fffbeb; transform: translateX(6px); }
-.gal-nav-icon { font-size: 2rem; }
-.gal-nav-name { font-size: 1rem; font-weight: 900; color: #1e293b; }
-.gal-nav-tag { font-size: 0.75rem; font-weight: 800; color: #64748b; }
+.gal-nav-card.is-recruited {
+  border-color: #86efac;
+  background: #fcfdfd;
+}
+
+.gal-nav-card.is-recruited.active {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  transform: translateX(6px);
+  box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2);
+}
+
+.gal-nav-card.is-jailed {
+  border-color: #fde68a;
+  background: #fffdf5;
+}
+
+.gal-nav-card.is-jailed.active {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  transform: translateX(6px);
+}
+
+.gal-nav-card.is-locked {
+  opacity: 0.82;
+  background: #f8fafc;
+}
+
+.gal-nav-card.is-locked .gal-nav-img {
+  filter: grayscale(0.85) opacity(0.65);
+}
+
+.gal-nav-card.is-locked.active {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  transform: translateX(6px);
+}
+
+.gal-status-pill {
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 8px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.gal-status-pill.recruited {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.gal-status-pill.jailed {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.gal-status-pill.locked {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1px solid #cbd5e1;
+}
+
+.gal-nav-icon { font-size: 2rem; display: flex; align-items: center; justify-content: center; }
+.gal-nav-name { font-size: 0.98rem; font-weight: 900; color: #1e293b; }
+.gal-nav-tag { font-size: 0.75rem; font-weight: 800; color: #64748b; margin-top: 1px; }
 
 .gallery-detail-panel {
   flex: 1;

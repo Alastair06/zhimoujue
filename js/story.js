@@ -2006,9 +2006,9 @@ export const RECRUIT_CONDITIONS = {
     desc: "四大美女之一，连环折扇施放倾城魅惑，削弱敌方心智与攻击！",
     dialogue: "“妾身红颜飘零，蒙使君不弃，愿借倾城月色化干戈助大业！”",
     conditions: {
-      minStars: 6,
-      silverCost: 150,
-      goldIngotsCost: 15
+      minStars: 4,
+      silverCost: 80,
+      goldIngotsCost: 10
     }
   },
   jiling: {
