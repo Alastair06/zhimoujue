@@ -2291,9 +2291,9 @@ export class BattleWorld {
         seconds: Math.floor(this.battleDurationFrames / 60),
         ultCount: this.heroUltimateCastCount || 0,
         conditions: [
-          { id: 'win', title: '旗开得胜 · 荡平敌阵克捷拔寨', achieved: false, desc: '军令未竣，阵线陷于苦战' },
-          { id: 'hp', title: '固若金汤 · 本营营垒完备七成以上', achieved: false, desc: '营垒受创，防御仅余残破' },
-          { id: 'speed_or_ult', title: '兵贵神速 · 一分钟内克敌或展无双绝艺', achieved: false, desc: '迁延苦战，未成胜势' }
+          { id: 'win', title: '攻克敌营', achieved: false, desc: '未攻克敌军' },
+          { id: 'hp', title: '本营完好', achieved: false, desc: '大本营生命不足 70%' },
+          { id: 'speed_or_ult', title: '速战速决', achieved: false, desc: '未在60秒内通关或释放绝技' }
         ]
       };
     }
@@ -2318,25 +2318,25 @@ export class BattleWorld {
       conditions: [
         {
           id: 'win',
-          title: '旗开得胜 · 荡平敌阵克捷拔寨',
+          title: '攻克敌营',
           achieved: cond1,
-          desc: '三军用命，成功斩将拔寨！ ⭐'
+          desc: '成功攻克敌方营寨 ⭐'
         },
         {
           id: 'hp',
-          title: '固若金汤 · 本营营垒完备七成以上',
+          title: '本营完好 (生命 ≥ 70%)',
           achieved: cond2,
           desc: cond2 
-            ? `壁垒森严！帅营完好度 ${Math.floor(hpRatio * 100)}% ⭐` 
-            : `营垒受创，防御仅余 ${Math.floor(hpRatio * 100)}%（未固七成防线）`
+            ? `大本营生命: ${Math.floor(hpRatio * 100)}% ⭐` 
+            : `大本营生命: ${Math.floor(hpRatio * 100)}% (未达 70%)`
         },
         {
           id: 'speed_or_ult',
-          title: '兵贵神速 · 一分钟内克敌或展无双绝艺',
+          title: '速战速决 (60秒内或施展绝技)',
           achieved: cond3,
           desc: cond3 
-            ? (ultCount >= 1 ? `猛将摧锋！施展名将无双绝艺 ${ultCount} 次 ⭐` : `兵贵神速！仅历 ${seconds} 秒即平定战线 ⭐`)
-            : `迁延苦战 ${seconds} 秒，且阵中未见名将无双摧锋`
+            ? (ultCount >= 1 ? `施展绝技 ${ultCount} 次 ⭐` : `用时 ${seconds} 秒 ⭐`)
+            : `用时 ${seconds} 秒且未施展绝技`
         }
       ]
     };

@@ -768,7 +768,48 @@ class PushWarGameApp {
     document.getElementById("btn-map-rank")?.addEventListener("click", () => this.openMilitaryRankModal());
     document.getElementById("btn-close-rank-modal")?.addEventListener("click", () => this.closeMilitaryRankModal());
     document.getElementById("btn-promo-confirm")?.addEventListener("click", () => this.closeRankPromotionModal());
+    document.getElementById("btn-promo-close-corner")?.addEventListener("click", () => this.closeRankPromotionModal());
     document.getElementById("btn-chest-reward-confirm")?.addEventListener("click", () => this.closeChestRewardModal());
+    document.getElementById("btn-chest-close-corner")?.addEventListener("click", () => this.closeChestRewardModal());
+
+    // 点击遮罩背景关闭弹窗
+    const promoModal = document.getElementById("modal-rank-promotion");
+    promoModal?.addEventListener("click", (e) => {
+      if (e.target === promoModal) this.closeRankPromotionModal();
+    });
+    const chestModal = document.getElementById("modal-star-chest-reward");
+    chestModal?.addEventListener("click", (e) => {
+      if (e.target === chestModal) this.closeChestRewardModal();
+    });
+    const rankModal = document.getElementById("modal-military-rank");
+    rankModal?.addEventListener("click", (e) => {
+      if (e.target === rankModal) this.closeMilitaryRankModal();
+    });
+
+    // 键盘 Esc / Enter 快捷操作
+    window.addEventListener("keydown", (e) => {
+      if (promoModal && !promoModal.classList.contains("hidden")) {
+        if (e.code === "Escape" || e.code === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          this.closeRankPromotionModal();
+          return;
+        }
+      }
+      if (chestModal && !chestModal.classList.contains("hidden")) {
+        if (e.code === "Escape" || e.code === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          this.closeChestRewardModal();
+          return;
+        }
+      }
+      if (rankModal && !rankModal.classList.contains("hidden")) {
+        if (e.code === "Escape") {
+          e.preventDefault();
+          this.closeMilitaryRankModal();
+          return;
+        }
+      }
+    });
   }
 
   // 渲染当前势力章节满星宝箱行
@@ -1771,18 +1812,34 @@ class PushWarGameApp {
       btnSkip.addEventListener("touchend", handleSkip);
     }
 
+    const btnCloseCorner = document.getElementById("btn-story-close-corner");
+    if (btnCloseCorner) {
+      btnCloseCorner.addEventListener("click", handleSkip);
+      btnCloseCorner.addEventListener("touchend", handleSkip);
+    }
+
     // 点击卡片主体区域推进
     const cardBox = document.getElementById("story-card-box");
     if (cardBox) {
       cardBox.addEventListener("click", (e) => {
-        if (e.target && (e.target.id === 'btn-story-skip' || e.target.closest('#btn-story-skip'))) return;
+        if (e.target && (e.target.id === 'btn-story-skip' || e.target.closest('#btn-story-skip') || e.target.id === 'btn-story-close-corner' || e.target.closest('#btn-story-close-corner'))) return;
         handleNext(e);
       });
     }
 
-    // 键盘支持（空格键或回车推进）
+    // 点击遮罩区域任意处也推进对话
+    const storyModal = document.getElementById("story-dialog-modal");
+    if (storyModal) {
+      storyModal.addEventListener("click", (e) => {
+        if (e.target === storyModal) {
+          handleNext(e);
+        }
+      });
+    }
+
+    // 键盘支持（无论处于战前story还是战后result状态，只要剧情对话正显示，空格/回车推进，Esc跳过）
     window.addEventListener("keydown", (e) => {
-      if (this.gameState === "story" && this.story.isShowing) {
+      if (this.story && this.story.isShowing) {
         if (e.code === "Space" || e.code === "Enter") {
           e.preventDefault();
           handleNext();
@@ -2018,13 +2075,19 @@ class PushWarGameApp {
     });
 
     // 绝世神兵爆落弹窗操作
+    const closeEpicLoot = () => {
+      document.getElementById("modal-epic-loot")?.classList.remove("open");
+      document.getElementById("battle-result-modal")?.classList.add("open");
+    };
     document.getElementById("btn-epic-loot-goto-armory")?.addEventListener("click", () => {
       document.getElementById("modal-epic-loot")?.classList.remove("open");
       this.switchView("armory");
     });
-    document.getElementById("btn-epic-loot-close")?.addEventListener("click", () => {
-      document.getElementById("modal-epic-loot")?.classList.remove("open");
-      document.getElementById("battle-result-modal")?.classList.add("open");
+    document.getElementById("btn-epic-loot-close")?.addEventListener("click", closeEpicLoot);
+    document.getElementById("btn-epic-loot-close-corner")?.addEventListener("click", closeEpicLoot);
+    const modalEpicLoot = document.getElementById("modal-epic-loot");
+    modalEpicLoot?.addEventListener("click", (e) => {
+      if (e.target === modalEpicLoot) closeEpicLoot();
     });
 
     // 战前布阵弹窗
@@ -2193,6 +2256,19 @@ class PushWarGameApp {
       }
     };
 
+    const returnToMap = () => {
+      handleCloseResultModal();
+      this.switchView("map");
+    };
+
+    document.getElementById("btn-res-return-map")?.addEventListener("click", returnToMap);
+    document.getElementById("btn-result-close-corner")?.addEventListener("click", returnToMap);
+
+    const resultModal = document.getElementById("battle-result-modal");
+    resultModal?.addEventListener("click", (e) => {
+      if (e.target === resultModal) returnToMap();
+    });
+
     document.getElementById("btn-res-to-workshop")?.addEventListener("click", () => {
       handleCloseResultModal();
       this.switchView("workshop");
@@ -2211,6 +2287,38 @@ class PushWarGameApp {
     document.getElementById("btn-res-retry-battle")?.addEventListener("click", () => {
       handleCloseResultModal();
       this.startStage(this.currentStageId);
+    });
+
+    // 键盘快捷监听：神兵爆落与结算弹窗（Esc退出到地图，Enter/Space快捷推进）
+    window.addEventListener("keydown", (e) => {
+      const epicLootModal = document.getElementById("modal-epic-loot");
+      if (epicLootModal && epicLootModal.classList.contains("open")) {
+        if (e.code === "Escape" || e.code === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          closeEpicLoot();
+          return;
+        }
+      }
+
+      const resModal = document.getElementById("battle-result-modal");
+      if (resModal && resModal.classList.contains("open")) {
+        if (e.code === "Escape") {
+          e.preventDefault();
+          returnToMap();
+          return;
+        }
+        if (e.code === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          const nextBtn = document.getElementById("btn-res-next-stage");
+          const retryBtn = document.getElementById("btn-res-retry-battle");
+          if (nextBtn && !nextBtn.classList.contains("hidden")) {
+            nextBtn.click();
+          } else if (retryBtn && !retryBtn.classList.contains("hidden")) {
+            retryBtn.click();
+          }
+          return;
+        }
+      }
     });
   }
 
@@ -3702,347 +3810,388 @@ class PushWarGameApp {
     this.gameState = "result";
     sound.stopBgm();
 
-    // 双人同屏对决【双雄会盟 · 同屏对决】专属结算
-    if (this.isPvPMode) {
-      const p1Won = (this.battle.redCastle && this.battle.redCastle.hp <= 0);
-      const modalBox = document.getElementById("result-dialog-box");
-      const banner = document.getElementById("result-icon-banner");
-      const title = document.getElementById("result-title");
-      const nextBtn = document.getElementById("btn-res-next-stage");
-      const retryBtn = document.getElementById("btn-res-retry-battle");
-      const mapBtn = document.getElementById("btn-res-return-map");
+    try {
+      // 双人同屏对决【双雄会盟 · 同屏对决】专属结算
+      if (this.isPvPMode) {
+        const p1Won = (this.battle.redCastle && this.battle.redCastle.hp <= 0);
+        const modalBox = document.getElementById("result-dialog-box");
+        const banner = document.getElementById("result-icon-banner");
+        const title = document.getElementById("result-title");
+        const nextBtn = document.getElementById("btn-res-next-stage");
+        const retryBtn = document.getElementById("btn-res-retry-battle");
+        const mapBtn = document.getElementById("btn-res-return-map");
 
-      sound.playVictory();
-      modalBox?.classList.remove("defeat");
-      
-      if (banner) banner.textContent = p1Won ? "🟦 🏆" : "🟥 🏆";
-      if (title) title.textContent = p1Won ? "汉室威振！蓝方(P1)大捷！" : "魏武定鼎！红方(P2)大捷！";
+        sound.playVictory();
+        modalBox?.classList.remove("defeat");
+        
+        if (banner) banner.textContent = p1Won ? "🟦 🏆" : "🟥 🏆";
+        if (title) title.textContent = p1Won ? "蓝方 (P1) 获胜！" : "红方 (P2) 获胜！";
 
-      const starRow = document.getElementById("result-star-row");
-      if (starRow) starRow.innerHTML = "<span>⚔️ 双雄会盟 · 胜负已分</span>";
-      const starLabel = document.getElementById("result-star-label");
-      if (starLabel) starLabel.textContent = p1Won 
-        ? "蓝方(P1)先破敌营，中原一统！" 
-        : "红方(P2)长驱直入，横扫千军！";
+        const starRow = document.getElementById("result-star-row");
+        if (starRow) starRow.innerHTML = "<span>⚔️ 双人对决已决出胜负</span>";
+        const starLabel = document.getElementById("result-star-label");
+        if (starLabel) starLabel.textContent = p1Won 
+          ? "蓝方 (P1) 攻破敌营！" 
+          : "红方 (P2) 攻破敌营！";
 
-      const conditionsEl = document.getElementById("result-star-conditions");
-      if (conditionsEl) conditionsEl.innerHTML = "";
-      document.getElementById("result-three-star-bonus")?.classList.add("hidden");
+        const conditionsEl = document.getElementById("result-star-conditions");
+        if (conditionsEl) conditionsEl.innerHTML = "";
+        document.getElementById("result-three-star-bonus")?.classList.add("hidden");
 
-      const lootCopperEl = document.getElementById("res-loot-copper");
-      if (lootCopperEl) lootCopperEl.textContent = `蓝方(P1)余血: ${Math.max(0, Math.floor(this.battle.blueCastle?.hp || 0))}`;
-      const lootSilverEl = document.getElementById("res-loot-silver");
-      if (lootSilverEl) lootSilverEl.textContent = `红方(P2)余血: ${Math.max(0, Math.floor(this.battle.redCastle?.hp || 0))}`;
-      const lootGoldEl = document.getElementById("res-loot-gold-ingot");
-      if (lootGoldEl) lootGoldEl.textContent = `对决时长: ${Math.floor(this.battle.battleDurationFrames / 60)} 秒`;
-      const castleHpEl = document.getElementById("res-castle-hp");
-      if (castleHpEl) castleHpEl.textContent = p1Won ? "🟦 蓝方获胜" : "🟥 红方获胜";
+        const lootCopperEl = document.getElementById("res-loot-copper");
+        if (lootCopperEl) lootCopperEl.textContent = `蓝方(P1)余血: ${Math.max(0, Math.floor(this.battle.blueCastle?.hp || 0))}`;
+        const lootSilverEl = document.getElementById("res-loot-silver");
+        if (lootSilverEl) lootSilverEl.textContent = `红方(P2)余血: ${Math.max(0, Math.floor(this.battle.redCastle?.hp || 0))}`;
+        const lootGoldEl = document.getElementById("res-loot-gold-ingot");
+        if (lootGoldEl) lootGoldEl.textContent = `用时: ${Math.floor(this.battle.battleDurationFrames / 60)} 秒`;
+        const castleHpEl = document.getElementById("res-castle-hp");
+        if (castleHpEl) castleHpEl.textContent = p1Won ? "🟦 蓝方获胜" : "🟥 红方获胜";
 
-      const equipRow = document.getElementById("res-loot-equip-row");
-      if (equipRow) equipRow.style.display = "none";
+        const equipRow = document.getElementById("res-loot-equip-row");
+        if (equipRow) equipRow.style.display = "none";
 
-      if (retryBtn) {
-        retryBtn.textContent = "再决胜负 🔄";
-        retryBtn.onclick = () => {
-          document.getElementById("battle-result-modal")?.classList.remove("open");
-          this.startPvP();
-        };
-      }
-      if (nextBtn) {
-        nextBtn.classList.remove("hidden");
-        nextBtn.textContent = "班师回朝 🏠";
-        nextBtn.onclick = () => {
-          document.getElementById("battle-result-modal")?.classList.remove("open");
-          this.switchView("title");
-        };
-      }
-      if (mapBtn) {
-        mapBtn.style.display = "none";
-      }
-
-      document.getElementById("battle-result-modal")?.classList.add("open");
-      return;
-    }
-
-    // 终局挑战【铜雀演武 · 无尽试炼】专属结算
-    if (this.isEndlessMode) {
-      const waves = this.endlessWave || 1;
-      const best = Math.max(this.saveData.maxEndlessWave || 0, waves);
-      this.saveData.maxEndlessWave = best;
-
-      const copperReward = waves * 180 + (this.battle.totalCopperEarned || 0);
-      const silverReward = waves * 35;
-      const goldReward = Math.floor(waves / 3) * 15;
-
-      this.saveData.copper = (this.saveData.copper || 0) + copperReward;
-      this.saveData.silver += silverReward;
-      this.saveData.goldIngots += goldReward;
-      SaveManager.save(this.saveData);
-
-      const modalBox = document.getElementById("result-dialog-box");
-      const banner = document.getElementById("result-icon-banner");
-      const title = document.getElementById("result-title");
-      const nextBtn = document.getElementById("btn-res-next-stage");
-      const retryBtn = document.getElementById("btn-res-retry-battle");
-
-      sound.playVictory();
-      modalBox?.classList.remove("defeat");
-      if (banner) banner.textContent = "🏆";
-      if (title) title.textContent = "铜雀演武 · 试炼结案！";
-
-      const starRow = document.getElementById("result-star-row");
-      if (starRow) starRow.innerHTML = "<span>🏯 终局试炼</span>";
-      const starLabel = document.getElementById("result-star-label");
-      if (starLabel) starLabel.textContent = `成功坚守 ${waves} 波狂潮！(历史纪录: ${best} 波)`;
-
-      const lootCopperEl = document.getElementById("res-loot-copper");
-      if (lootCopperEl) lootCopperEl.textContent = `+${copperReward} 🪙 (已汇入国库)`;
-      document.getElementById("res-loot-silver").textContent = `+${silverReward} 🥈`;
-      document.getElementById("res-loot-gold-ingot").textContent = `+${goldReward} 💰`;
-      document.getElementById("res-castle-hp").textContent = `${waves} 轮次`;
-
-      const equipRow = document.getElementById("res-loot-equip-row");
-      const lootEquipEl = document.getElementById("res-loot-equip");
-      if (equipRow && lootEquipEl) {
-        if (waves >= 5) {
-          equipRow.style.display = "flex";
-          lootEquipEl.textContent = "🎁 铜雀演武宝匣 (功勋大奖)";
-        } else {
-          equipRow.style.display = "none";
+        if (retryBtn) {
+          retryBtn.textContent = "再决胜负 🔄";
+          retryBtn.onclick = () => {
+            document.getElementById("battle-result-modal")?.classList.remove("open");
+            this.startPvP();
+          };
         }
-      }
-
-      if (nextBtn) {
-        nextBtn.classList.remove("hidden");
-        nextBtn.textContent = "再战一轮 ⚔️";
-        nextBtn.onclick = () => {
-          document.getElementById("battle-result-modal")?.classList.remove("open");
-          this.startStage('endless');
-        };
-      }
-      if (retryBtn) retryBtn.classList.add("hidden");
-      document.getElementById("btn-res-farm-again")?.classList.add("hidden");
-
-      document.getElementById("battle-result-modal")?.classList.add("open");
-      return;
-    }
-
-    const isWin = this.battle.winner === 'blue';
-    const ch = this.getCurrentChapterConfig(this.currentStageId);
-
-    const modalBox = document.getElementById("result-dialog-box");
-    const banner = document.getElementById("result-icon-banner");
-    const title = document.getElementById("result-title");
-    const nextBtn = document.getElementById("btn-res-next-stage");
-    const retryBtn = document.getElementById("btn-res-retry-battle");
-
-    if (isWin) {
-      sound.playVictory();
-      modalBox?.classList.remove("defeat");
-      if (banner) banner.textContent = "🎉";
-      if (title) title.textContent = "大 获 全 胜！";
-
-      // 记录历史总星数与历史官阶
-      const oldTotalStars = this.calculateTotalStars();
-      const oldRank = getMilitaryRank(oldTotalStars).curRank;
-
-      // 详尽三星判定与数据
-      const starDetails = this.battle.calculateStarDetails();
-      const stars = starDetails.stars;
-
-      if (!this.saveData.factionChapterStars) this.saveData.factionChapterStars = { shu: {}, wei: {}, wu: {}, qun: {} };
-      if (!this.saveData.factionChapterStars[this.currentFaction]) this.saveData.factionChapterStars[this.currentFaction] = {};
-      const prevStars = this.saveData.factionChapterStars[this.currentFaction][this.currentStageId] || 0;
-      if (stars > prevStars) {
-        this.saveData.factionChapterStars[this.currentFaction][this.currentStageId] = stars;
-      }
-      this.saveData.chapterStars = this.saveData.factionChapterStars[this.currentFaction];
-
-      // 战局铜钱全额 1:1 沉淀 + 满星特别犒赏 (+50% 铜钱加成)
-      const earnedFromKills = this.battle.totalCopperEarned || 0;
-      const surplusGold = Math.max(0, this.gold);
-      const baseCopper = earnedFromKills + surplusGold;
-      const isThreeStar = (stars === 3);
-      const bonusCopper = isThreeStar ? Math.floor(baseCopper * 0.5) : 0;
-      const totalBattleCopper = baseCopper + bonusCopper;
-
-      this.saveData.copper = (this.saveData.copper || 0) + totalBattleCopper;
-      this.saveData.silver += ch.rewardSilver;
-      this.saveData.goldIngots += ch.rewardGoldIngot;
-
-      const currentFactionChapters = this.getFactionChapters();
-      if (!this.saveData.factionProgress) this.saveData.factionProgress = { shu: 1, wei: 1, wu: 1, qun: 1 };
-      const currentProg = this.saveData.factionProgress[this.currentFaction] || 1;
-      if (this.currentStageId === currentProg && currentProg < currentFactionChapters.length) {
-        this.saveData.factionProgress[this.currentFaction]++;
-      }
-      this.saveData.unlockedChapter = this.saveData.factionProgress[this.currentFaction];
-
-      // 检查官阶晋升
-      const newTotalStars = this.calculateTotalStars();
-      const newRank = getMilitaryRank(newTotalStars).curRank;
-      if (newRank.rank > oldRank.rank) {
-        this.pendingRankPromotion = newRank;
-      }
-
-      // 动态星级卡槽逐个点亮与清脆音效
-      const starSlots = [
-        document.getElementById("res-star-slot-1"),
-        document.getElementById("res-star-slot-2"),
-        document.getElementById("res-star-slot-3")
-      ];
-      starSlots.forEach((slot, idx) => {
-        if (!slot) return;
-        slot.classList.remove("earned");
-        if (idx < stars) {
-          setTimeout(() => {
-            slot.classList.add("earned");
-            sound.playStarChime(idx);
-          }, 220 + idx * 300);
+        if (nextBtn) {
+          nextBtn.classList.remove("hidden");
+          nextBtn.textContent = "返回主菜单 🏠";
+          nextBtn.onclick = () => {
+            document.getElementById("battle-result-modal")?.classList.remove("open");
+            this.switchView("title");
+          };
         }
-      });
-
-      const starLabel = document.getElementById("result-star-label");
-      if (starLabel) {
-        const starLabels = ["", "一星小捷 · 初战拔寨", "二星大捷 · 固若金汤", "⭐⭐⭐ 三星全功 · 威震华夏！"];
-        starLabel.textContent = starLabels[stars] || "大获全胜！";
-      }
-
-      // 渲染三星达成条件清单
-      const conditionsContainer = document.getElementById("result-star-conditions");
-      if (conditionsContainer) {
-        conditionsContainer.innerHTML = starDetails.conditions.map(c => `
-          <div class="result-cond-row ${c.achieved ? 'achieved' : 'failed'}">
-            <div class="cond-title-group">
-              <span>${c.achieved ? '✅' : '⚪'}</span>
-              <span>${c.title}</span>
-            </div>
-            <span class="cond-desc-tag">${c.desc}</span>
-          </div>
-        `).join('');
-      }
-
-      // 满星犒赏横幅展示
-      const bonusBanner = document.getElementById("result-three-star-bonus");
-      const bonusText = document.getElementById("res-three-star-bonus-text");
-      if (bonusBanner) {
-        if (isThreeStar) {
-          bonusBanner.classList.remove("hidden");
-          if (bonusText) bonusText.textContent = `全勋克捷！额外犒军铜钱 +${bonusCopper} 🪙（充实金匮），特赠名将专属武魂残卷！`;
-        } else {
-          bonusBanner.classList.add("hidden");
+        if (mapBtn) {
+          mapBtn.style.display = "none";
         }
+
+        document.getElementById("battle-result-modal")?.classList.add("open");
+        return;
       }
 
-      const lootCopperEl = document.getElementById("res-loot-copper");
-      if (lootCopperEl) lootCopperEl.textContent = `+${totalBattleCopper} 🪙（解运入库${isThreeStar ? ' · 全勋特赏' : ''}）`;
+      // 终局挑战【铜雀演武 · 无尽试炼】专属结算
+      if (this.isEndlessMode) {
+        const waves = this.endlessWave || 1;
+        const best = Math.max(this.saveData.maxEndlessWave || 0, waves);
+        this.saveData.maxEndlessWave = best;
 
-      document.getElementById("res-loot-silver").textContent = "+" + ch.rewardSilver + " 🥈";
-      document.getElementById("res-loot-gold-ingot").textContent = "+" + ch.rewardGoldIngot + " 💰";
-      document.getElementById("res-castle-hp").textContent = Math.floor((this.battle.blueCastle.hp / this.battle.blueCastle.maxHp) * 100) + "%";
+        const copperReward = waves * 180 + (this.battle.totalCopperEarned || 0);
+        const silverReward = waves * 35;
+        const goldReward = Math.floor(waves / 3) * 15;
 
-      // 四大势力专属 Boss 战利品装备与专属碎片掉落全映射表 (首通得 1星本体，重复挑战得专属升星碎片)
-      const CHAPTER_BOSS_DROP = {
-        shu: {
-          1: "jingtiejian", 2: "fangtian_huaji", 3: "baodiao_gong", 4: "tiebi_kai",
-          5: "shuanggu_jian", 6: "shoumian_kai", 7: "qinglong_dao", 8: "dilu_ma",
-          9: "longdan_qiang", 10: "zhangba_shemao", 11: "chitu_ma", 12: "zhanjin_qiang",
-          13: "baodiao_gong", 14: "qinglong_dao", 15: "shoumian_kai", 16: "longdan_qiang",
-          17: "tiebi_kai", 18: "yitian_jian"
-        },
-        wei: {
-          1: "jingtiejian", 2: "tiebi_kai", 3: "fangtian_huaji", 4: "shoumian_kai",
-          5: "qinglong_dao", 6: "baodiao_gong", 7: "zhanjin_qiang", 8: "dilu_ma",
-          9: "yitian_jian"
-        },
-        wu: {
-          1: "jingtiejian", 2: "baodiao_gong", 3: "tiebi_kai", 4: "shoumian_kai",
-          5: "chitu_ma", 6: "longdan_qiang", 7: "shuanggu_jian", 8: "qinglong_dao",
-          9: "yitian_jian"
-        },
-        qun: {
-          1: "jingtiejian", 2: "tiebi_kai", 3: "fangtian_huaji", 4: "baodiao_gong",
-          5: "shuanggu_jian", 6: "zhanjin_qiang", 7: "chitu_ma", 8: "yitian_jian"
-        }
-      };
+        this.saveData.copper = (this.saveData.copper || 0) + copperReward;
+        this.saveData.silver = (this.saveData.silver || 0) + silverReward;
+        this.saveData.goldIngots = (this.saveData.goldIngots || 0) + goldReward;
+        SaveManager.save(this.saveData);
 
-      const factionDropMap = CHAPTER_BOSS_DROP[this.currentFaction] || CHAPTER_BOSS_DROP.shu;
-      const targetEquipId = factionDropMap[this.currentStageId] || "mingguang_kai";
-      const equipMeta = EQUIPMENT_DATABASE.find(e => e.id === targetEquipId) || EQUIPMENT_DATABASE[0];
-      let firstEpicLoot = null;
-      let dropLootText = "无特别战利品";
+        const modalBox = document.getElementById("result-dialog-box");
+        const banner = document.getElementById("result-icon-banner");
+        const title = document.getElementById("result-title");
+        const nextBtn = document.getElementById("btn-res-next-stage");
+        const retryBtn = document.getElementById("btn-res-retry-battle");
 
-      if (!this.saveData.inventory[targetEquipId]) {
-        // 首次击败该关 Boss，必定斩获 1 星神兵/宝甲本体！
-        this.saveData.inventory[targetEquipId] = { star: 1 };
-        firstEpicLoot = equipMeta;
-        dropLootText = `🎉 阵前首捷拔寨，缴获当世重器：【${equipMeta.name}】！已造册入武库！`;
-      } else {
-        // 重复挑战该战役名将，必定获得 2~5 枚专属升星碎片；若三星通关额外特赏 +2 枚！
-        let dropShards = 2 + Math.floor(Math.random() * 4); // 2~5 枚
-        if (isThreeStar) dropShards += 2;
-        this.saveData.shards[targetEquipId] = (this.saveData.shards[targetEquipId] || 0) + dropShards;
-        const totalShards = this.saveData.shards[targetEquipId];
-        dropLootText = `🧩 阵斩夺魁：收缴【${equipMeta.name}】锻造残卷 +${dropShards}！${isThreeStar ? '(承全勋殊赏+2) ' : ''}(武库现存: ${totalShards}卷)`;
-      }
+        sound.playVictory();
+        modalBox?.classList.remove("defeat");
+        if (banner) banner.textContent = "🏆";
+        if (title) title.textContent = "无尽试炼结算";
 
-      // 无论首通还是重复刷碎片，确保立即将装备与碎片永久存盘！
-      SaveManager.save(this.saveData);
+        const starRow = document.getElementById("result-star-row");
+        if (starRow) starRow.innerHTML = "<span>🏯 终局试炼</span>";
+        const starLabel = document.getElementById("result-star-label");
+        if (starLabel) starLabel.textContent = `成功坚守 ${waves} 波！(历史纪录: ${best} 波)`;
 
-      const resEquipEl = document.getElementById("res-loot-equip");
-      if (resEquipEl) resEquipEl.textContent = dropLootText;
+        const lootCopperEl = document.getElementById("res-loot-copper");
+        if (lootCopperEl) lootCopperEl.textContent = `+${copperReward} 🪙`;
+        document.getElementById("res-loot-silver").textContent = `+${silverReward} 🥈`;
+        document.getElementById("res-loot-gold-ingot").textContent = `+${goldReward} 💰`;
+        document.getElementById("res-castle-hp").textContent = `${waves} 波`;
 
-      nextBtn?.classList.remove("hidden");
-      retryBtn?.classList.add("hidden");
-      document.getElementById("btn-res-farm-again")?.classList.remove("hidden");
-
-      // 先播放关后胜利剧情对话，再判定名将生擒纳降，随后弹出神兵大奖或结算面板
-      this.story.playChapterVictory(this.currentStageId, () => {
-        const candidates = ch.recruitHeroIds || (ch.recruitHeroId ? [ch.recruitHeroId] : []);
-        const recruitId = candidates.find(id => !this.saveData.recruitedHeroes || !this.saveData.recruitedHeroes.includes(id));
-
-        const proceedAfterRecruit = () => {
-          if (firstEpicLoot) {
-            const lootIconEl = document.getElementById("epic-loot-icon");
-            if (lootIconEl) {
-              if (firstEpicLoot.image) {
-                lootIconEl.innerHTML = `<img src="${firstEpicLoot.image}" alt="${firstEpicLoot.name}" class="epic-loot-pixel-img" />`;
-              } else {
-                lootIconEl.textContent = firstEpicLoot.icon;
-              }
-            }
-            document.getElementById("epic-loot-name").textContent = `【${firstEpicLoot.name} (1星)】`;
-            document.getElementById("epic-loot-desc").textContent = `${firstEpicLoot.desc} 已收入主公武库！`;
-            document.getElementById("epic-loot-stat").textContent = `⚔️ ${firstEpicLoot.starStats[1].desc}`;
-            document.getElementById("modal-epic-loot")?.classList.add("open");
+        const equipRow = document.getElementById("res-loot-equip-row");
+        const lootEquipEl = document.getElementById("res-loot-equip");
+        if (equipRow && lootEquipEl) {
+          if (waves >= 5) {
+            equipRow.style.display = "flex";
+            lootEquipEl.textContent = "🎁 演武宝匣";
           } else {
-            document.getElementById("battle-result-modal")?.classList.add("open");
+            equipRow.style.display = "none";
+          }
+        }
+
+        if (nextBtn) {
+          nextBtn.classList.remove("hidden");
+          nextBtn.textContent = "再战一轮 ⚔️";
+          nextBtn.onclick = () => {
+            document.getElementById("battle-result-modal")?.classList.remove("open");
+            this.startStage('endless');
+          };
+        }
+        if (retryBtn) retryBtn.classList.add("hidden");
+        document.getElementById("btn-res-farm-again")?.classList.add("hidden");
+
+        document.getElementById("battle-result-modal")?.classList.add("open");
+        return;
+      }
+
+      const isWin = this.battle.winner === 'blue';
+      const ch = this.getCurrentChapterConfig(this.currentStageId);
+
+      const modalBox = document.getElementById("result-dialog-box");
+      const banner = document.getElementById("result-icon-banner");
+      const title = document.getElementById("result-title");
+      const nextBtn = document.getElementById("btn-res-next-stage");
+      const retryBtn = document.getElementById("btn-res-retry-battle");
+
+      if (isWin) {
+        sound.playVictory();
+        modalBox?.classList.remove("defeat");
+        if (banner) banner.textContent = "🎉";
+        if (title) title.textContent = "大 获 全 胜！";
+
+        // 记录历史总星数与历史官阶
+        const oldTotalStars = this.calculateTotalStars();
+        const oldRank = getMilitaryRank(oldTotalStars).curRank;
+
+        // 详尽三星判定与数据
+        const starDetails = this.battle.calculateStarDetails();
+        const stars = starDetails.stars;
+
+        if (!this.saveData.factionChapterStars) this.saveData.factionChapterStars = { shu: {}, wei: {}, wu: {}, qun: {} };
+        if (!this.saveData.factionChapterStars[this.currentFaction]) this.saveData.factionChapterStars[this.currentFaction] = {};
+        const prevStars = this.saveData.factionChapterStars[this.currentFaction][this.currentStageId] || 0;
+        if (stars > prevStars) {
+          this.saveData.factionChapterStars[this.currentFaction][this.currentStageId] = stars;
+        }
+        this.saveData.chapterStars = this.saveData.factionChapterStars[this.currentFaction];
+
+        // 战局铜钱全额 1:1 沉淀 + 满星特别犒赏 (+50% 铜钱加成)
+        const earnedFromKills = this.battle.totalCopperEarned || 0;
+        const surplusGold = Math.max(0, this.gold);
+        const baseCopper = earnedFromKills + surplusGold;
+        const isThreeStar = (stars === 3);
+        const bonusCopper = isThreeStar ? Math.floor(baseCopper * 0.5) : 0;
+        const totalBattleCopper = baseCopper + bonusCopper;
+
+        this.saveData.copper = (this.saveData.copper || 0) + totalBattleCopper;
+        this.saveData.silver = (this.saveData.silver || 0) + (ch.rewardSilver || 0);
+        this.saveData.goldIngots = (this.saveData.goldIngots || 0) + (ch.rewardGoldIngot || 0);
+
+        const currentFactionChapters = this.getFactionChapters();
+        if (!this.saveData.factionProgress) this.saveData.factionProgress = { shu: 1, wei: 1, wu: 1, qun: 1 };
+        const currentProg = this.saveData.factionProgress[this.currentFaction] || 1;
+        if (this.currentStageId === currentProg && currentProg < currentFactionChapters.length) {
+          this.saveData.factionProgress[this.currentFaction]++;
+        }
+        this.saveData.unlockedChapter = this.saveData.factionProgress[this.currentFaction];
+
+        // 检查官阶晋升
+        const newTotalStars = this.calculateTotalStars();
+        const newRank = getMilitaryRank(newTotalStars).curRank;
+        if (newRank.rank > oldRank.rank) {
+          this.pendingRankPromotion = newRank;
+        }
+
+        // 动态星级卡槽逐个点亮与清脆音效
+        const starSlots = [
+          document.getElementById("res-star-slot-1"),
+          document.getElementById("res-star-slot-2"),
+          document.getElementById("res-star-slot-3")
+        ];
+        starSlots.forEach((slot, idx) => {
+          if (!slot) return;
+          slot.classList.remove("earned");
+          if (idx < stars) {
+            setTimeout(() => {
+              slot.classList.add("earned");
+              sound.playStarChime(idx);
+            }, 220 + idx * 300);
+          }
+        });
+
+        const starLabel = document.getElementById("result-star-label");
+        if (starLabel) {
+          const starLabels = ["", "一星通关", "二星大捷", "⭐⭐⭐ 三星全胜！"];
+          starLabel.textContent = starLabels[stars] || "大获全胜！";
+        }
+
+        // 渲染三星达成条件清单
+        const conditionsContainer = document.getElementById("result-star-conditions");
+        if (conditionsContainer) {
+          conditionsContainer.innerHTML = (starDetails.conditions || []).map(c => `
+            <div class="result-cond-row ${c.achieved ? 'achieved' : 'failed'}">
+              <div class="cond-title-group">
+                <span>${c.achieved ? '✅' : '⚪'}</span>
+                <span>${c.title}</span>
+              </div>
+              <span class="cond-desc-tag">${c.desc}</span>
+            </div>
+          `).join('');
+        }
+
+        // 满星犒赏横幅展示
+        const bonusBanner = document.getElementById("result-three-star-bonus");
+        const bonusText = document.getElementById("res-three-star-bonus-text");
+        if (bonusBanner) {
+          if (isThreeStar) {
+            bonusBanner.classList.remove("hidden");
+            if (bonusText) bonusText.textContent = `满星奖励：铜钱 +${bonusCopper} 🪙 (+50%)`;
+          } else {
+            bonusBanner.classList.add("hidden");
+          }
+        }
+
+        const lootCopperEl = document.getElementById("res-loot-copper");
+        if (lootCopperEl) lootCopperEl.textContent = `+${totalBattleCopper} 🪙${isThreeStar ? ' (+50%)' : ''}`;
+
+        document.getElementById("res-loot-silver").textContent = "+" + (ch.rewardSilver || 0) + " 🥈";
+        document.getElementById("res-loot-gold-ingot").textContent = "+" + (ch.rewardGoldIngot || 0) + " 💰";
+        document.getElementById("res-castle-hp").textContent = Math.floor((this.battle.blueCastle.hp / this.battle.blueCastle.maxHp) * 100) + "%";
+
+        // 四大势力专属 Boss 战利品装备与专属碎片掉落全映射表
+        const CHAPTER_BOSS_DROP = {
+          shu: {
+            1: "jingtiejian", 2: "fangtian_huaji", 3: "baodiao_gong", 4: "tiebi_kai",
+            5: "shuanggu_jian", 6: "shoumian_kai", 7: "qinglong_dao", 8: "dilu_ma",
+            9: "longdan_qiang", 10: "zhangba_shemao", 11: "chitu_ma", 12: "zhanjin_qiang",
+            13: "baodiao_gong", 14: "qinglong_dao", 15: "shoumian_kai", 16: "longdan_qiang",
+            17: "tiebi_kai", 18: "yitian_jian"
+          },
+          wei: {
+            1: "jingtiejian", 2: "tiebi_kai", 3: "fangtian_huaji", 4: "shoumian_kai",
+            5: "qinglong_dao", 6: "baodiao_gong", 7: "zhanjin_qiang", 8: "dilu_ma",
+            9: "yitian_jian"
+          },
+          wu: {
+            1: "jingtiejian", 2: "baodiao_gong", 3: "tiebi_kai", 4: "shoumian_kai",
+            5: "chitu_ma", 6: "longdan_qiang", 7: "shuanggu_jian", 8: "qinglong_dao",
+            9: "yitian_jian"
+          },
+          qun: {
+            1: "jingtiejian", 2: "tiebi_kai", 3: "fangtian_huaji", 4: "baodiao_gong",
+            5: "shuanggu_jian", 6: "zhanjin_qiang", 7: "chitu_ma", 8: "yitian_jian"
           }
         };
 
-        if (recruitId && RECRUIT_CONDITIONS[recruitId]) {
-          this.openRecruitModal(recruitId, proceedAfterRecruit);
+        const factionDropMap = CHAPTER_BOSS_DROP[this.currentFaction] || CHAPTER_BOSS_DROP.shu;
+        const targetEquipId = factionDropMap[this.currentStageId] || "mingguang_kai";
+        const equipMeta = EQUIPMENT_DATABASE.find(e => e.id === targetEquipId) || EQUIPMENT_DATABASE[0];
+        let firstEpicLoot = null;
+        let dropLootText = "无";
+
+        if (!this.saveData.inventory) this.saveData.inventory = {};
+        if (!this.saveData.shards) this.saveData.shards = {};
+
+        if (!this.saveData.inventory[targetEquipId]) {
+          // 首次击败该关 Boss，必定斩获 1 星神兵/宝甲本体！
+          this.saveData.inventory[targetEquipId] = { star: 1 };
+          firstEpicLoot = equipMeta;
+          dropLootText = `获得装备：【${equipMeta.name}】 (1星)`;
         } else {
-          proceedAfterRecruit();
+          // 重复挑战该战役名将，必定获得 2~5 枚专属升星碎片；若三星通关额外特赏 +2 枚！
+          let dropShards = 2 + Math.floor(Math.random() * 4); // 2~5 枚
+          if (isThreeStar) dropShards += 2;
+          this.saveData.shards[targetEquipId] = (this.saveData.shards[targetEquipId] || 0) + dropShards;
+          const totalShards = this.saveData.shards[targetEquipId];
+          dropLootText = `【${equipMeta.name}】残卷 +${dropShards} (现有: ${totalShards})`;
         }
-      }, this.currentFaction);
-    } else {
-      modalBox?.classList.add("defeat");
-      if (banner) banner.textContent = "😭";
-      if (title) title.textContent = "城 池 陷 落！";
 
-      const starRow = document.getElementById("result-star-row");
-      if (starRow) starRow.innerHTML = "⚪ ⚪ ⚪";
-      document.getElementById("result-star-label").textContent = "战局失利，重整旗鼓再战！";
+        SaveManager.save(this.saveData);
 
-      document.getElementById("res-loot-silver").textContent = "+0 🥈";
-      document.getElementById("res-loot-gold-ingot").textContent = "+0 💰";
-      document.getElementById("res-castle-hp").textContent = "0%";
+        const resEquipEl = document.getElementById("res-loot-equip");
+        if (resEquipEl) resEquipEl.textContent = dropLootText;
 
-      nextBtn?.classList.add("hidden");
-      retryBtn?.classList.remove("hidden");
-      document.getElementById("btn-res-farm-again")?.classList.add("hidden");
+        nextBtn?.classList.remove("hidden");
+        retryBtn?.classList.add("hidden");
+        document.getElementById("btn-res-farm-again")?.classList.remove("hidden");
 
+        // 先播放关后胜利剧情对话，再判定名将生擒纳降，随后弹出神兵大奖或结算面板
+        this.story.playChapterVictory(this.currentStageId, () => {
+          try {
+            const candidates = ch.recruitHeroIds || (ch.recruitHeroId ? [ch.recruitHeroId] : []);
+            const recruitId = candidates.find(id => !this.saveData.recruitedHeroes || !this.saveData.recruitedHeroes.includes(id));
+
+            const proceedAfterRecruit = () => {
+              try {
+                if (firstEpicLoot) {
+                  const lootIconEl = document.getElementById("epic-loot-icon");
+                  if (lootIconEl) {
+                    if (firstEpicLoot.image) {
+                      lootIconEl.innerHTML = `<img src="${firstEpicLoot.image}" alt="${firstEpicLoot.name}" class="epic-loot-pixel-img" />`;
+                    } else {
+                      lootIconEl.textContent = firstEpicLoot.icon || "🔱";
+                    }
+                  }
+                  document.getElementById("epic-loot-name").textContent = `【${firstEpicLoot.name} (1星)】`;
+                  document.getElementById("epic-loot-desc").textContent = `已存入武库，可随时穿戴`;
+                  document.getElementById("epic-loot-stat").textContent = `⚔️ ${firstEpicLoot.starStats?.[1]?.desc || firstEpicLoot.desc || '攻击加成'}`;
+                  document.getElementById("modal-epic-loot")?.classList.add("open");
+                } else {
+                  document.getElementById("battle-result-modal")?.classList.add("open");
+                }
+              } catch (lootErr) {
+                console.error("proceedAfterRecruit error:", lootErr);
+                document.getElementById("battle-result-modal")?.classList.add("open");
+              }
+            };
+
+            if (recruitId && RECRUIT_CONDITIONS[recruitId]) {
+              this.openRecruitModal(recruitId, proceedAfterRecruit);
+            } else {
+              proceedAfterRecruit();
+            }
+          } catch (recErr) {
+            console.error("Victory recruit flow error:", recErr);
+            document.getElementById("battle-result-modal")?.classList.add("open");
+          }
+        }, this.currentFaction);
+      } else {
+        modalBox?.classList.add("defeat");
+        if (banner) banner.textContent = "😭";
+        if (title) title.textContent = "战 役 失 利！";
+
+        const starRow = document.getElementById("result-star-row");
+        if (starRow) starRow.innerHTML = "⚪ ⚪ ⚪";
+        document.getElementById("result-star-label").textContent = "战局失利，重整旗鼓再战！";
+
+        // 隐藏满星奖励横幅
+        document.getElementById("result-three-star-bonus")?.classList.add("hidden");
+
+        // 渲染战败条件指示
+        const conditionsContainer = document.getElementById("result-star-conditions");
+        if (conditionsContainer) {
+          conditionsContainer.innerHTML = `
+            <div class="result-cond-row failed">
+              <div class="cond-title-group"><span>⚪</span><span>攻克敌营</span></div>
+              <span class="cond-desc-tag">敌营未破</span>
+            </div>
+            <div class="result-cond-row failed">
+              <div class="cond-title-group"><span>⚪</span><span>本营完好</span></div>
+              <span class="cond-desc-tag">要塞失守</span>
+            </div>
+          `;
+        }
+
+        const lootCopperEl = document.getElementById("res-loot-copper");
+        if (lootCopperEl) lootCopperEl.textContent = `+${this.battle.totalCopperEarned || 0} 🪙`;
+
+        document.getElementById("res-loot-silver").textContent = "+0 🥈";
+        document.getElementById("res-loot-gold-ingot").textContent = "+0 💰";
+        document.getElementById("res-castle-hp").textContent = "0%";
+
+        const resEquipEl = document.getElementById("res-loot-equip");
+        if (resEquipEl) resEquipEl.textContent = "无";
+
+        nextBtn?.classList.add("hidden");
+        retryBtn?.classList.remove("hidden");
+        document.getElementById("btn-res-farm-again")?.classList.add("hidden");
+
+        document.getElementById("battle-result-modal")?.classList.add("open");
+      }
+    } catch (criticalErr) {
+      console.error("Critical handleGameOver error:", criticalErr);
       document.getElementById("battle-result-modal")?.classList.add("open");
     }
   }

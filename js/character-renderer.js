@@ -273,7 +273,7 @@ export class CharacterRenderer {
     ctx.arc(0, -46, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    // 萌萌大眼睛 (受击时变 >_<)
+    // 武将眼睛 (受击时变 >_<)
     ctx.fillStyle = "#0f172a";
     if (hurtTimer > 0) {
       ctx.font = "bold 10px sans-serif";

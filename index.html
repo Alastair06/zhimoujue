@@ -767,6 +767,7 @@
     <!-- ================= 5. 剧情对话与视觉小说弹窗 ================= -->
     <div class="story-dialog-modal" id="story-dialog-modal" onclick="window.storyNext(event)">
       <div class="story-card-box" id="story-card-box">
+        <button class="btn-story-close-corner" id="btn-story-close-corner" onclick="window.storySkip(event)" title="跳过剧情">✕</button>
         
         <div class="story-avatar-box" id="story-speaker-avatar">👑</div>
 
@@ -777,7 +778,7 @@
             <span class="story-step-badge" id="story-step-badge">1 / 4</span>
           </div>
           <p class="story-dialog-text" id="story-dialog-text">二弟、三弟！黄巾猖獗，民不聊生。我等兄弟今日在桃园结义，正当齐心戮力，保境安民！</p>
-          <div class="story-click-hint">👉 点击卡片任意位置或按【空格/回车】继续对话</div>
+          <div class="story-click-hint">👉 点击任意位置或按【空格/回车】继续对话</div>
         </div>
 
         <div class="story-actions">
@@ -791,6 +792,7 @@
     <!-- ================= 6. 战斗胜负结算面板 (Result Modal) ================= -->
     <div class="battle-result-modal" id="battle-result-modal">
       <div class="result-dialog-box" id="result-dialog-box">
+        <button class="btn-result-close-corner" id="btn-result-close-corner" title="关闭并返回地图">✕</button>
         
         <div class="result-icon-banner" id="result-icon-banner">🎉</div>
         <h2 class="result-title" id="result-title">大 获 全 胜！</h2>
@@ -801,7 +803,7 @@
           <div class="result-star-slot" id="res-star-slot-2"><span class="star-icon">⭐</span></div>
           <div class="result-star-slot" id="res-star-slot-3"><span class="star-icon">⭐</span></div>
         </div>
-        <div class="result-star-label" id="result-star-label">三星大捷 · 战功卓著！</div>
+        <div class="result-star-label" id="result-star-label">三星全胜！</div>
 
         <!-- 详细达成条件清单 -->
         <div class="result-star-conditions" id="result-star-conditions">
@@ -810,51 +812,58 @@
 
         <!-- 满星特别犒赏横幅 -->
         <div class="result-three-star-bonus hidden" id="result-three-star-bonus">
-          <span class="bonus-tag">⭐⭐⭐ 满星大捷特赏</span>
-          <span class="bonus-desc" id="res-three-star-bonus-text">战阵犒赏额外加赐五成，另赐名将专属武魂残卷！</span>
+          <span class="bonus-tag">⭐ 满星奖励</span>
+          <span class="bonus-desc" id="res-three-star-bonus-text">铜钱额外 +50%</span>
         </div>
 
-        <!-- 战利品与统计信息 (展示铜钱全额结算、银两与金元宝奖励) -->
+        <!-- 战利品与统计信息 -->
         <div class="result-stats-card">
           <div class="res-stat-item">
-            <span class="stat-lbl">🪙 战局缴获铜钱:</span>
-            <strong class="stat-val" id="res-loot-copper" style="color:#b45309;">+350 (充实国帑)</strong>
+            <span class="stat-lbl">🪙 铜钱:</span>
+            <strong class="stat-val" id="res-loot-copper" style="color:#b45309;">+350</strong>
           </div>
           <div class="res-stat-item">
-            <span class="stat-lbl">🥈 缴获银两:</span>
+            <span class="stat-lbl">🥈 银两:</span>
             <strong class="stat-val" id="res-loot-silver" style="color:#64748b;">+200</strong>
           </div>
           <div class="res-stat-item">
-            <span class="stat-lbl">💰 战功金元宝:</span>
+            <span class="stat-lbl">💰 元宝:</span>
             <strong class="stat-val" id="res-loot-gold-ingot" style="color:#f59e0b;">+25</strong>
           </div>
           <div class="res-stat-item">
-            <span class="stat-lbl">🏰 帅营营垒完好:</span>
+            <span class="stat-lbl">🏰 大本营生命:</span>
             <strong class="stat-val" id="res-castle-hp" style="color:#2563eb;">100%</strong>
           </div>
           <div class="res-stat-item" id="res-loot-equip-row" style="background:#fffbeb; padding:4px 8px; border-radius:6px; border:1px solid #fef08a;">
-            <span class="stat-lbl">💎 阵前缴获神兵宝器:</span>
+            <span class="stat-lbl">🎁 战利品:</span>
             <strong class="stat-val" id="res-loot-equip" style="color:#b45309;">无</strong>
           </div>
         </div>
 
         <!-- 结算操作按钮 -->
-        <div class="result-footer-actions" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:14px;">
-          <button class="btn-res-action" id="btn-res-to-armory" style="background:#fffbeb; border:2px solid #f59e0b; color:#b45309; font-weight:bold; padding:10px 12px; font-size:0.95rem;">
-            🏪 前往武库配装
-          </button>
-          <button class="btn-res-action btn-res-workshop" id="btn-res-to-workshop" style="padding:10px 12px; font-size:0.95rem;">
-            🏰 升级神工坊
-          </button>
-          <button class="btn-res-action btn-res-farm hidden" id="btn-res-farm-again" style="background:linear-gradient(135deg, #0284c7, #0369a1); border:2px solid #075985; color:#fff; font-weight:bold; padding:10px 12px; font-size:0.95rem;">
-            🔄 再临敌阵 · 搜集残卷
-          </button>
-          <button class="btn-res-action btn-res-next" id="btn-res-next-stage" style="padding:10px 12px; font-size:0.95rem;">
-            🚩 进军下一战役！
-          </button>
-          <button class="btn-res-action btn-res-retry hidden" id="btn-res-retry-battle" style="grid-column: span 2; padding:10px 14px; font-size:1rem;">
-            🔄 重整旗鼓 · 再次挑战！
-          </button>
+        <div class="result-footer-actions" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+          <div style="display:flex; gap:8px;">
+            <button class="btn-res-action btn-res-next" id="btn-res-next-stage" style="flex:1; padding:8px 12px; font-size:0.95rem;">
+              🚩 进军下一战役
+            </button>
+            <button class="btn-res-action btn-res-farm hidden" id="btn-res-farm-again" style="flex:1; background:linear-gradient(135deg, #0284c7, #0369a1); border:2px solid #075985; color:#fff; font-weight:bold; padding:8px 12px; font-size:0.95rem;">
+              🔄 再战此关
+            </button>
+            <button class="btn-res-action btn-res-retry hidden" id="btn-res-retry-battle" style="flex:1; padding:8px 14px; font-size:1rem;">
+              🔄 重整旗鼓 · 再次挑战！
+            </button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-res-action" id="btn-res-to-armory" style="flex:1; background:#fffbeb; border:2px solid #f59e0b; color:#b45309; font-weight:bold; padding:6px 8px; font-size:0.85rem;">
+              🏪 武库
+            </button>
+            <button class="btn-res-action btn-res-workshop" id="btn-res-to-workshop" style="flex:1; padding:6px 8px; font-size:0.85rem;">
+              🏰 神工坊
+            </button>
+            <button class="btn-res-action btn-res-map" id="btn-res-return-map" style="flex:1; padding:6px 8px; font-size:0.85rem; background:#f1f5f9; border:2px solid #cbd5e1; color:#334155; border-radius:12px; font-weight:bold; cursor:pointer;">
+              🗺️ 战役地图
+            </button>
+          </div>
         </div>
 
       </div>
@@ -885,56 +894,56 @@
 
       <div class="workshop-container">
         <div class="workshop-header-tip">
-          💡 使用<strong>【🪙 铜钱】</strong>可兑换军饷银两或劳役修缮；使用<strong>【🥈 银两】</strong>永久升级士兵战力与屯田产速！
+          💡 <strong>【🪙 铜钱】</strong>可兑换银两或加固城堡；<strong>【🥈 银两】</strong>用于升级兵种与研习战术。
         </div>
 
-        <!-- 铜钱军需司兑换专区 -->
+        <!-- 铜钱兑换与加固专区 -->
         <div class="workshop-section-title" style="margin:16px 0 10px 0; font-size:1.1rem; font-weight:900; color:#b45309; display:flex; align-items:center; gap:6px;">
-          <span>🪙 铜钱军需司 · 粮饷铸银处</span>
+          <span>🪙 铜钱兑换与加固</span>
         </div>
 
         <div class="workshop-grid" style="margin-bottom:24px;">
           <div class="shop-item-card" style="background:#fffbeb; border-color:#f59e0b;">
             <div class="shop-item-icon">🪙</div>
-            <div class="shop-item-name">铜钱熔铸官银</div>
-            <div class="shop-item-desc">消耗 500 国库铜钱，兑换 100 纯正银两</div>
+            <div class="shop-item-name">兑换银两</div>
+            <div class="shop-item-desc">消耗 500 铜钱，兑换 100 银两</div>
             <button class="btn-buy-upgrade" id="btn-copper-exchange-100" style="background:#d97706; border-color:#b45309;">
-              🪙 500 兑换 100 银两
+              🪙 500 换 100 银
             </button>
           </div>
 
           <div class="shop-item-card" style="background:#fffbeb; border-color:#f59e0b;">
             <div class="shop-item-icon">💰</div>
-            <div class="shop-item-name">大宗军需拨付</div>
-            <div class="shop-item-desc">消耗 1200 国库铜钱，大宗兑换 260 银两</div>
+            <div class="shop-item-name">大额兑换</div>
+            <div class="shop-item-desc">消耗 1200 铜钱，兑换 260 银两</div>
             <button class="btn-buy-upgrade" id="btn-copper-exchange-260" style="background:#d97706; border-color:#b45309;">
-              🪙 1200 兑换 260 银两
+              🪙 1200 换 260 银
             </button>
           </div>
 
           <div class="shop-item-card" style="background:#fffbeb; border-color:#f59e0b;">
             <div class="shop-item-icon">🛠️</div>
-            <div class="shop-item-name">劳役加固要塞</div>
-            <div class="shop-item-desc">消耗 400 铜钱招募民夫，城堡血量永久 +150 (当前已加 <span id="val-copper-wall-hp">0</span>)</div>
+            <div class="shop-item-name">加固城堡</div>
+            <div class="shop-item-desc">消耗 400 铜钱，城堡生命永久 +150 (已加: <span id="val-copper-wall-hp">0</span>)</div>
             <button class="btn-buy-upgrade" id="btn-copper-upgrade-wall" style="background:#d97706; border-color:#b45309;">
-              🪙 400 劳役加固
+              🪙 400 加固
             </button>
           </div>
         </div>
 
-        <!-- ⚔️ 全军战术军略研习专区 (闪避/抗性/暴击/吸血/防御) -->
+        <!-- ⚔️ 全军战术军略研习专区 -->
         <div class="workshop-section-title" style="margin:20px 0 10px; font-size:1.15rem; font-weight:900; color:#1e293b; display:flex; align-items:center; gap:8px;">
-          <span>⚔️ 全军战术军略研习 (闪避 · 抗性 · 暴击 · 嗜血 · 铁壁)</span>
-          <span style="font-size:0.8rem; font-weight:normal; color:#64748b; background:#f1f5f9; padding:2px 8px; border-radius:12px;">永久生效于全军与名将</span>
+          <span>⚔️ 全军战术研习</span>
+          <span style="font-size:0.8rem; font-weight:normal; color:#64748b; background:#f1f5f9; padding:2px 8px; border-radius:12px;">全员生效</span>
         </div>
 
         <div class="workshop-grid" id="workshop-army-tactic-grid" style="margin-bottom:20px;">
           <!-- 1. 全军神行闪避 -->
           <div class="shop-item-card" id="card-up-army-dodge">
             <div class="shop-item-icon">💨</div>
-            <div class="shop-item-name">全军神行闪避</div>
+            <div class="shop-item-name">全军闪避</div>
             <div class="shop-item-desc">
-              训练全军身法闪避敌方打击 (0伤害)<br>
+              概率完全闪避敌方伤害<br>
               <strong style="color:#0284c7;">当前: <span id="val-army-dodge-rank">Lv.0</span> (<span id="val-army-dodge-pct">+0%</span>)</strong> | 上限 15%
             </div>
             <button class="btn-buy-upgrade" id="btn-buy-army-dodge">
@@ -945,9 +954,9 @@
           <!-- 2. 百战铁志抗性 -->
           <div class="shop-item-card" id="card-up-army-stun-resist">
             <div class="shop-item-icon">🛡️</div>
-            <div class="shop-item-name">百战铁志抗性</div>
+            <div class="shop-item-name">眩晕抗性</div>
             <div class="shop-item-desc">
-              抵御敌将眩晕强控，大幅缩短晕眩时间<br>
+              缩短被眩晕与受控时间<br>
               <strong style="color:#059669;">当前: <span id="val-army-stun-resist-rank">Lv.0</span> (<span id="val-army-stun-resist-pct">+0%</span>)</strong> | 上限 40%
             </div>
             <button class="btn-buy-upgrade" id="btn-buy-army-stun-resist">
@@ -958,9 +967,9 @@
           <!-- 3. 会心破阵暴击 -->
           <div class="shop-item-card" id="card-up-army-crit">
             <div class="shop-item-icon">💥</div>
-            <div class="shop-item-name">会心破阵暴击</div>
+            <div class="shop-item-name">会心暴击</div>
             <div class="shop-item-desc">
-              普攻命中敌军时有概率触发 1.75倍 暴击<br>
+              普攻触发 1.75倍 暴击<br>
               <strong style="color:#ea580c;">当前: <span id="val-army-crit-rank">Lv.0</span> (<span id="val-army-crit-pct">+0%</span>)</strong> | 上限 17.5%
             </div>
             <button class="btn-buy-upgrade" id="btn-buy-army-crit">
@@ -971,9 +980,9 @@
           <!-- 4. 陷阵饮血刀法 -->
           <div class="shop-item-card" id="card-up-army-lifesteal">
             <div class="shop-item-icon">🩸</div>
-            <div class="shop-item-name">陷阵饮血刀法</div>
+            <div class="shop-item-name">攻击吸血</div>
             <div class="shop-item-desc">
-              普攻命中敌军时吸收 50% 伤害转化为自身生命<br>
+              普攻伤害 50% 转化为自身生命<br>
               <strong style="color:#dc2626;">当前: <span id="val-army-lifesteal-rank">Lv.0</span> (<span id="val-army-lifesteal-pct">+0%</span>)</strong> | 上限 15%
             </div>
             <button class="btn-buy-upgrade" id="btn-buy-army-lifesteal">
@@ -984,9 +993,9 @@
           <!-- 5. 重装玄铁护甲 -->
           <div class="shop-item-card" id="card-up-army-defense">
             <div class="shop-item-icon">🥋</div>
-            <div class="shop-item-name">重装玄铁护甲</div>
+            <div class="shop-item-name">全军防御</div>
             <div class="shop-item-desc">
-              增强全军甲胄韧度，直接抵扣等额普通伤害<br>
+              直接减免等额普通伤害<br>
               <strong style="color:#475569;">当前: <span id="val-army-defense-rank">Lv.0</span> (<span id="val-army-defense-val">+0防</span>)</strong> | 上限 +40防
             </div>
             <button class="btn-buy-upgrade" id="btn-buy-army-defense">
@@ -997,15 +1006,15 @@
 
         <!-- 银两科技库专区 -->
         <div class="workshop-section-title" style="margin-bottom:10px; font-size:1.1rem; font-weight:900; color:#1e293b; display:flex; align-items:center; gap:6px;">
-          <span>🥈 兵械与工程器械升级</span>
+          <span>🥈 兵种与器械升级</span>
         </div>
 
         <div class="workshop-grid" id="workshop-grid">
           
           <div class="shop-item-card" id="card-up-infantry">
             <div class="shop-item-icon">🛡️</div>
-            <div class="shop-item-name">加厚精铁重盾</div>
-            <div class="shop-item-desc">小步兵生命值永久 +60 (当前已加 <span id="val-infantry-hp">0</span>)</div>
+            <div class="shop-item-name">步兵生命</div>
+            <div class="shop-item-desc">步兵生命 +60 (已加: <span id="val-infantry-hp">0</span>)</div>
             <button class="btn-buy-upgrade" id="btn-buy-infantry" data-cost="120">
               🥈 120 升级
             </button>
@@ -1013,8 +1022,8 @@
 
           <div class="shop-item-card" id="card-up-archer">
             <div class="shop-item-icon">🏹</div>
-            <div class="shop-item-name">诸葛连弩改装</div>
-            <div class="shop-item-desc">小弓兵攻击力 +8，高抛射速加快 (当前已加 <span id="val-archer-atk">0</span>)</div>
+            <div class="shop-item-name">弓兵攻击</div>
+            <div class="shop-item-desc">弓兵攻击 +8，射速加快 (已加: <span id="val-archer-atk">0</span>)</div>
             <button class="btn-buy-upgrade" id="btn-buy-archer" data-cost="150">
               🥈 150 升级
             </button>
@@ -1022,8 +1031,8 @@
 
           <div class="shop-item-card" id="card-up-economy">
             <div class="shop-item-icon">🌾</div>
-            <div class="shop-item-name">屯田垦荒军饷</div>
-            <div class="shop-item-desc">战斗中铜钱产速永久 +4/秒 (当前产速: <span id="val-economy-rate">12</span>/秒)</div>
+            <div class="shop-item-name">铜钱产速</div>
+            <div class="shop-item-desc">局内铜钱 +4/秒 (当前: <span id="val-economy-rate">12</span>/秒)</div>
             <button class="btn-buy-upgrade" id="btn-buy-economy" data-cost="200" style="background:#f59e0b; border-color:#d97706;">
               🥈 200 升级
             </button>
@@ -1031,8 +1040,8 @@
 
           <div class="shop-item-card" id="card-up-bomb">
             <div class="shop-item-icon">💣</div>
-            <div class="shop-item-name">开花烈性炸药</div>
-            <div class="shop-item-desc">大炸弹伤害 +120，轰炸冲击波更猛 (当前已加 <span id="val-bomb-dmg">0</span>)</div>
+            <div class="shop-item-name">定点炸弹</div>
+            <div class="shop-item-desc">炸药伤害 +120，范围更大 (已加: <span id="val-bomb-dmg">0</span>)</div>
             <button class="btn-buy-upgrade" id="btn-buy-bomb" data-cost="180">
               🥈 180 升级
             </button>
@@ -1040,8 +1049,8 @@
 
           <div class="shop-item-card" id="card-up-castle">
             <div class="shop-item-icon">🏰</div>
-            <div class="shop-item-name">加固要塞城墙</div>
-            <div class="shop-item-desc">城堡要塞血量上限 +500 (当前已加 <span id="val-castle-hp">0</span>)</div>
+            <div class="shop-item-name">要塞城墙</div>
+            <div class="shop-item-desc">城堡生命上限 +500 (已加: <span id="val-castle-hp">0</span>)</div>
             <button class="btn-buy-upgrade" id="btn-buy-castle" data-cost="140">
               🥈 140 升级
             </button>
@@ -1049,8 +1058,8 @@
 
           <div class="shop-item-card" id="card-up-tower">
             <div class="shop-item-icon">🗼</div>
-            <div class="shop-item-name">神机箭塔守军</div>
-            <div class="shop-item-desc">城堡箭塔射击伤害提升至 28 点</div>
+            <div class="shop-item-name">箭塔伤害</div>
+            <div class="shop-item-desc">城堡箭塔单发伤害提升至 28 点</div>
             <button class="btn-buy-upgrade" id="btn-buy-tower" data-cost="160">
               🥈 160 升级
             </button>
@@ -1058,7 +1067,7 @@
 
           <div class="shop-item-card" id="card-up-charm">
             <div class="shop-item-icon">💃</div>
-            <div class="shop-item-name">倾国倾城魅力</div>
+            <div class="shop-item-name">美人计时间</div>
             <div class="shop-item-desc">美人计魅惑时间延长至 12.5 秒</div>
             <button class="btn-buy-upgrade" id="btn-buy-charm" data-cost="130">
               🥈 130 升级
@@ -1273,19 +1282,20 @@
     <!-- ================= 战役首通斩获神装全屏庆贺弹窗 (Epic Loot Modal) ================= -->
     <div class="battle-result-modal" id="modal-epic-loot">
       <div class="result-dialog-box" style="border:4px solid #f59e0b; background:linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);">
+        <button class="btn-result-close-corner" id="btn-epic-loot-close-corner" title="收下战利品">✕</button>
         <div class="result-icon-banner" style="font-size:4.5rem; animation: bounce 1s infinite;" id="epic-loot-icon">🔱</div>
-        <h2 class="result-title" style="color:#b45309; font-size:1.8rem;" id="epic-loot-title">斩 获 绝 世 神 兵！</h2>
+        <h2 class="result-title" style="color:#b45309; font-size:1.8rem;" id="epic-loot-title">获得新装备！</h2>
         <div style="font-size:1.2rem; font-weight:bold; color:#0f172a; margin:8px 0;" id="epic-loot-name">【方天画戟 (1星)】</div>
-        <p style="color:#64748b; font-size:0.95rem; margin-bottom:12px;" id="epic-loot-desc">击败战神吕布所得，双月牙金刃，绝世无双！已收入主公国库！</p>
+        <p style="color:#64748b; font-size:0.95rem; margin-bottom:12px;" id="epic-loot-desc">已存入武库，可随时穿戴</p>
         
         <div style="background:#ffffff; border:1px solid #fde68a; border-radius:8px; padding:10px; margin-bottom:16px; text-align:left; font-size:0.9rem;">
           <div style="color:#16a34a; font-weight:bold;" id="epic-loot-stat">⚔️ 攻击力 +25</div>
-          <div style="color:#dc2626; font-size:0.85rem; margin-top:2px;">⭐ 收集碎片升至 3 星将觉醒专属神技【破军横扫】！</div>
+          <div style="color:#dc2626; font-size:0.85rem; margin-top:2px;">⭐ 收集碎片可升星强化</div>
         </div>
 
         <div style="display:flex; justify-content:center; gap:12px;">
           <button class="btn-res-action btn-res-next" id="btn-epic-loot-goto-armory">
-            🏪 立即前往武库佩戴！
+            武库配装 🏪
           </button>
           <button class="btn-res-action btn-res-workshop" id="btn-epic-loot-close">
             收下战利品 🎁
@@ -1352,33 +1362,33 @@
             </div>
           </div>
 
-          <!-- 战术特性与克制关系 -->
+          <!-- 战术特性与定位 -->
           <div class="gal-section-box">
-            <div class="gal-sec-title">⚔️ 专属战术特性与技能:</div>
+            <div class="gal-sec-title">⚔️ 专属特技:</div>
             <p class="gal-sec-text" id="gal-feature">
               专属光环【仁德之风】：刘备在场时，全军士兵攻击力 +15%，移速 +10%
             </p>
           </div>
 
           <div class="gal-section-box">
-            <div class="gal-sec-title">🔄 战场克制关系:</div>
+            <div class="gal-sec-title">🔄 定位:</div>
             <p class="gal-sec-text" id="gal-counter" style="color:#d97706;">
               全军增益核心辅助主帅
             </p>
           </div>
 
           <div class="gal-section-box">
-            <div class="gal-sec-title">📖 三国趣味历史典故:</div>
+            <div class="gal-sec-title">📖 传略:</div>
             <p class="gal-sec-text" id="gal-story" style="color:#475569; font-style:italic;">
               汉景帝之子中山靖王之后，桃园结义，以仁义得天下人心！
             </p>
           </div>
 
-          <!-- 礼聘招贤操作栏 -->
+          <!-- 招募操作栏 -->
           <div class="gal-action-bar" id="gal-action-bar" style="margin-top:16px; padding-top:12px; border-top:1px dashed #cbd5e1; display:flex; justify-content:space-between; align-items:center;">
             <div id="gal-recruit-status-text" style="font-weight:bold;"></div>
             <button id="btn-gal-recruit" class="btn-primary" style="display:none; padding:8px 18px; font-size:0.92rem; font-weight:bold; border-radius:8px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border:none; cursor:pointer; box-shadow:0 3px 6px rgba(217,119,6,0.3); transition:transform 0.15s ease;">
-              🤝 礼聘招贤
+              🤝 招募
             </button>
           </div>
         </div>
@@ -1397,9 +1407,9 @@
 
       <!-- 顶部旌旗与生擒印鉴 -->
       <div class="recruit-header">
-        <div class="recruit-badge-flag">🎖️ 阵前生擒敌将</div>
-        <h3 class="recruit-modal-title" id="recruit-title">招纳归顺</h3>
-        <p class="recruit-modal-subtitle" id="recruit-subtitle">破寨俘帅，当世豪杰愿听主公发落！</p>
+        <div class="recruit-badge-flag">🎖️ 捕获武将</div>
+        <h3 class="recruit-modal-title" id="recruit-title">招募武将</h3>
+        <p class="recruit-modal-subtitle" id="recruit-subtitle">破寨俘帅，可招募该武将加入麾下！</p>
       </div>
 
       <!-- 武将立绘与传记卡片 -->
@@ -1417,7 +1427,7 @@
             “方天画戟重归鞘，天下谁人是英雄！主公若不弃，布愿效犬马之劳！”
           </div>
           <div class="recruit-skill-desc">
-            <span style="font-weight:900; color:#b45309;">⚔️ 绝世特性:</span>
+            <span style="font-weight:900; color:#b45309;">⚔️ 特性:</span>
             <span id="recruit-specialty-desc" style="color:#475569; font-size:0.85rem;">方天乱舞范围横扫，残血修罗狂暴！</span>
           </div>
         </div>
@@ -1425,7 +1435,7 @@
 
       <!-- 归顺纳降条件清单 -->
       <div class="recruit-req-container">
-        <div class="recruit-req-head">📜 纳降心服条件 (需满足主公功勋与厚礼礼聘):</div>
+        <div class="recruit-req-head">📜 招募条件:</div>
         <div class="recruit-req-grid" id="recruit-req-list">
           <!-- 动态条件项目 -->
         </div>
@@ -1450,8 +1460,8 @@
         <div style="display:flex; align-items:center; gap:10px;">
           <img src="assets/ui/icon_box_scroll.png" style="width:40px; height:40px; image-rendering:pixelated;" alt="存档" />
           <div>
-            <h3 style="margin:0; font-size:1.35rem; color:#1e293b; font-weight:900;">行营军谋府 · 征战卷帙总录</h3>
-            <p style="margin:2px 0 0 0; font-size:0.85rem; color:#64748b;">支持三大独立槽位、跨设备代码导出/导入与数据重置</p>
+            <h3 style="margin:0; font-size:1.35rem; color:#1e293b; font-weight:900;">存档管理</h3>
+            <p style="margin:2px 0 0 0; font-size:0.85rem; color:#64748b;">支持3个独立存档槽位与跨设备代码导入导出</p>
           </div>
         </div>
         <button class="btn-picker-close" id="btn-archive-close" style="width:36px; height:36px; border-radius:50%; border:2px solid #cbd5e1; background:#f8fafc; cursor:pointer; display:flex; align-items:center; justify-content:center;">
@@ -1478,17 +1488,17 @@
         <h4 style="margin:0 0 6px 0; color:#1e293b; font-size:1rem; font-weight:900; display:flex; align-items:center; gap:6px;">
           <span>📋 跨设备存档代码 (备份与转移)</span>
         </h4>
-        <p style="margin:0 0 10px 0; font-size:0.85rem; color:#64748b;">复制下方存档代码可随时在其他手机、平板或浏览器中粘贴导入，彻底防止浏览器清理缓存丢档！</p>
+        <p style="margin:0 0 10px 0; font-size:0.85rem; color:#64748b;">复制代码可在其他设备粘贴导入，实现存档同步与备份：</p>
         <textarea id="archive-code-area" rows="3" style="width:100%; box-sizing:border-box; border:2px solid #cbd5e1; border-radius:8px; padding:8px; font-family:monospace; font-size:0.85rem; resize:none; margin-bottom:10px;" placeholder="点击下方【导出当前代码】或在此粘贴代码导入..."></textarea>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn-archive-op btn-archive-load" id="btn-archive-export">📋 导出并复制当前存档代码</button>
-          <button class="btn-archive-op btn-archive-save" id="btn-archive-import">📥 载入并恢复上方存档代码</button>
+          <button class="btn-archive-op btn-archive-load" id="btn-archive-export">📋 导出当前存档代码</button>
+          <button class="btn-archive-op btn-archive-save" id="btn-archive-import">📥 导入上方存档代码</button>
         </div>
       </div>
 
       <!-- 底部安全操作 -->
       <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:14px;">
-        <button class="btn-archive-op btn-archive-delete" id="btn-archive-reset-all" style="font-size:0.85rem;">🔄 清空当前槽位进度 (重新启程)</button>
+        <button class="btn-archive-op btn-archive-delete" id="btn-archive-reset-all" style="font-size:0.85rem;">🔄 重置当前槽位</button>
         <div style="font-size:0.8rem; color:#94a3b8;">所有存档数据均本地安全存储</div>
       </div>
     </div>
@@ -1501,8 +1511,8 @@
         <div class="rank-header-title-box">
           <span class="rank-seal-icon">🏛️</span>
           <div>
-            <h3 class="rank-modal-main-title">武庙封侯录 · 天下官阶谱</h3>
-            <p class="rank-modal-sub-title">百战策勋，拜将封侯！天下征战克捷之勋，皆化作三军不拔虎威！</p>
+            <h3 class="rank-modal-main-title">武庙官阶</h3>
+            <p class="rank-modal-sub-title">累积战功星级提升官职，获得全军属性加成</p>
           </div>
         </div>
         <button class="btn-close-modal" id="btn-close-rank-modal">✕</button>
@@ -1546,22 +1556,23 @@
   <!-- ================= 9. 加官晋爵 · 武庙授敕仪式弹窗 (Rank Promotion Ceremony Modal) ================= -->
   <div class="modal-backdrop hidden" id="modal-rank-promotion">
     <div class="modal-dialog-card promotion-modal-card">
+      <button class="btn-promo-close-corner" id="btn-promo-close-corner" title="确定并关闭">✕</button>
       <div class="promotion-rays-bg"></div>
       <div class="promotion-seal-stamp">印</div>
       <div class="promotion-content-box">
         <div class="promotion-crown-icon" id="promo-rank-icon">👑</div>
         <h2 class="promotion-title">加 官 晋 爵！</h2>
-        <div class="promotion-subtitle">尚书台考功策勋，降天子明诏：主公搴旗克敌，功昭日月，特加册封：</div>
+        <div class="promotion-subtitle">战功显赫，晋升新官职：</div>
         <div class="promotion-rank-banner" id="promo-rank-banner">
           <h1 class="promotion-rank-name" id="promo-rank-name">正七品 · 偏将军</h1>
         </div>
         <p class="promotion-motto" id="promo-rank-motto">“受命前驱，扫荡群凶！”</p>
         <div class="promotion-buff-card" id="promo-rank-buff">
-          <span>⚔️ 全军攻击加成提升至: <strong>+10%</strong></span>
+          <span>⚔️ 全军攻击提升至: <strong>+10%</strong></span>
           <span>🛡️ 全军基础护甲提升至: <strong>+5</strong></span>
         </div>
         <button class="btn-main-action promo-confirm-btn" id="btn-promo-confirm">
-          谨拜受命 · 奉诏总戎！ ⚔️
+          谢封领受 ⚔️
         </button>
       </div>
     </div>
@@ -1570,17 +1581,18 @@
   <!-- ================= 10. 章节满星宝箱领奖弹窗 (Star Chest Reward Modal) ================= -->
   <div class="modal-backdrop hidden" id="modal-star-chest-reward">
     <div class="modal-dialog-card chest-reward-card">
+      <button class="btn-promo-close-corner" id="btn-chest-close-corner" title="领取并关闭">✕</button>
       <div class="chest-rays-glow"></div>
       <div class="chest-box-icon" id="chest-reward-icon">🎁</div>
-      <h2 class="chest-reward-title" id="chest-reward-title">章节功勋宝匣开启！</h2>
-      <p class="chest-reward-subtitle" id="chest-reward-sub">犒赏三军 · 中军行营特拨粮饷军资</p>
+      <h2 class="chest-reward-title" id="chest-reward-title">章节宝箱开启！</h2>
+      <p class="chest-reward-subtitle" id="chest-reward-sub">获得以下奖励：</p>
       
       <div class="chest-reward-items-grid" id="chest-reward-items-grid">
         <!-- 动态渲染奖品项 (铜钱、银两、元宝、神装/碎片) -->
       </div>
 
       <button class="btn-main-action chest-confirm-btn" id="btn-chest-reward-confirm">
-        谨领犒赏 · 收归府库 🪙
+        领取奖励 🎁
       </button>
     </div>
   </div>

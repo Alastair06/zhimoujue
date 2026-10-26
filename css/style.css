@@ -1542,6 +1542,7 @@ html, body {
 }
 
 .story-card-box {
+  position: relative;
   background: #ffffff;
   border: 6px solid #facc15;
   border-radius: 28px;
@@ -1691,13 +1692,14 @@ html, body {
 }
 
 .result-dialog-box {
+  position: relative;
   background: #ffffff;
-  border: 8px solid #facc15;
-  border-radius: 32px;
-  padding: 16px 28px;
+  border: 6px solid #facc15;
+  border-radius: 24px;
+  padding: 12px 20px;
   text-align: center;
-  max-width: 500px;
-  max-height: 94vh;
+  max-width: 480px;
+  max-height: 90vh;
   overflow-y: auto;
   box-sizing: border-box;
   width: 92%;
@@ -1707,26 +1709,30 @@ html, body {
 
 .result-dialog-box.defeat { border-color: #ef4444; }
 
-.result-icon-banner { font-size: 2.8rem; margin-bottom: 2px; }
-.result-title { font-size: 1.8rem; font-weight: 900; color: #854d0e; margin-bottom: 4px; }
+.result-icon-banner { font-size: 2.2rem; margin-bottom: 0; }
+.result-title { font-size: 1.5rem; font-weight: 900; color: #854d0e; margin-bottom: 2px; }
 .result-dialog-box.defeat .result-title { color: #dc2626; }
 
-.result-star-row { display: flex; justify-content: center; gap: 8px; font-size: 2rem; margin-bottom: 2px; }
-.result-star-label { font-size: 0.95rem; font-weight: 900; color: #d97706; margin-bottom: 10px; }
+.result-star-row { display: flex; justify-content: center; gap: 6px; font-size: 1.7rem; margin-bottom: 0; }
+.result-star-label { font-size: 0.85rem; font-weight: 900; color: #d97706; margin-bottom: 6px; }
 
 .result-stats-card {
   background: #f8fafc;
   border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 10px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  border-radius: 12px;
+  padding: 6px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+  margin-bottom: 8px;
   text-align: left;
 }
 
-.res-stat-item { display: flex; justify-content: space-between; font-size: 0.95rem; font-weight: 800; color: #475569; }
+#res-loot-equip-row {
+  grid-column: span 2;
+}
+
+.res-stat-item { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; color: #475569; }
 
 .result-footer-actions { display: flex; flex-direction: column; gap: 10px; }
 
@@ -1768,7 +1774,7 @@ html, body {
 .btn-buy-upgrade { background: #22c55e; color: #ffffff; border: 3px solid #16a34a; padding: 8px 16px; border-radius: 16px; font-size: 0.95rem; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #15803d; }
 .btn-buy-upgrade:disabled { background: #cbd5e1; border-color: #94a3b8; box-shadow: 0 3px 0 #64748b; cursor: not-allowed; }
 
-/* ================= 8. 萌将与兵种图鉴 (Gallery) ================= */
+/* ================= 8. 名将与兵种图鉴 (Gallery) ================= */
 .gallery-layout-container { flex: 1; display: flex; padding: 20px 24px; gap: 20px; overflow: hidden; max-width: 1200px; margin: 0 auto; width: 100%; }
 
 .gallery-sidebar {
@@ -2259,7 +2265,7 @@ html, body {
   color: #ffffff !important;
 }
 
-/* ================= 萌将像素美术素材专属视觉增强 ================= */
+/* ================= 名将像素美术素材专属视觉增强 ================= */
 .pixelated,
 .card-pixel-img,
 .dialogue-pixel-avatar,
@@ -3110,22 +3116,54 @@ button:active, .unit-card:active {
   100% { transform: scale(1.1) rotate(0deg); opacity: 1; }
 }
 
+.btn-result-close-corner,
+.btn-story-close-corner,
+.btn-promo-close-corner {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.btn-result-close-corner:hover,
+.btn-story-close-corner:hover,
+.btn-promo-close-corner:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+  transform: scale(1.08);
+}
+
 .result-star-conditions {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  margin: 10px 0 12px 0;
+  margin: 6px 0 8px 0;
 }
 
 .result-cond-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  line-height: 1.3;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  line-height: 1.25;
   transition: all 0.2s ease;
 }
 

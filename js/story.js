@@ -586,7 +586,7 @@ export const FACTION_CAMPAIGNS = {
 
 export { FACTION_INFOS };
 
-// 萌将图鉴档案库 (四大阵营 · 40大名将全景收录)
+// 名将图鉴档案库 (四大阵营 · 40大名将全景收录)
 export const GENERALS_ARCHIVE = [
   // ================= 🟢 蜀汉阵营 (10位) =================
   {
@@ -1503,52 +1503,57 @@ export class StoryManager {
   }
 
   renderCurrentStep() {
-    this.cacheDom();
-    if (this.dialogStep >= this.currentDialogList.length) {
+    try {
+      this.cacheDom();
+      if (this.dialogStep >= this.currentDialogList.length) {
+        this.closeDialog();
+        return;
+      }
+
+      const item = this.currentDialogList[this.dialogStep];
+      if (this.speakerEl) this.speakerEl.textContent = item.speaker;
+      if (this.roleEl) this.roleEl.textContent = `【${item.role}】`;
+
+      const GENERAL_AVATAR_MAP = {
+        "赵云": "assets/generals/zhaoyun_128.png",
+        "关羽": "assets/generals/guanyu_128.png",
+        "张飞": "assets/generals/zhangfei_128.png",
+        "刘备": "assets/generals/liubei_128.png",
+        "诸葛亮": "assets/generals/zhugeliang_128.png",
+        "吕布": "assets/generals/lvbu_128.png",
+        "黄忠": "assets/generals/huangzhong_128.png",
+        "马超": "assets/generals/machao_128.png",
+        "魏延": "assets/generals/weiyan_128.png",
+        "太史慈": "assets/generals/taishici_128.png",
+        "曹操": "assets/generals/caocao_128.png",
+        "司马懿": "assets/generals/simayi_128.png",
+        "程远志": "assets/generals/chenyuanzhi_128.png"
+      };
+
+      if (this.avatarEl) {
+        const avatarSrc = item.image || GENERAL_AVATAR_MAP[item.speaker];
+        if (avatarSrc) {
+          this.avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${item.speaker}" class="dialogue-pixel-avatar" />`;
+        } else if (item.avatar && (item.avatar.endsWith('.png') || item.avatar.endsWith('.webp') || item.avatar.includes('/'))) {
+          this.avatarEl.innerHTML = `<img src="${item.avatar}" class="dialogue-pixel-avatar" />`;
+        } else {
+          this.avatarEl.textContent = item.avatar || '⚔️';
+        }
+      }
+
+      if (this.textEl) this.textEl.textContent = item.text || '';
+      if (this.stepBadgeEl) this.stepBadgeEl.textContent = `${this.dialogStep + 1} / ${this.currentDialogList.length}`;
+
+      if (this.dialogCardEl) {
+        if (item.side === 'right') {
+          this.dialogCardEl.classList.add("enemy-speaker");
+        } else {
+          this.dialogCardEl.classList.remove("enemy-speaker");
+        }
+      }
+    } catch (err) {
+      console.error("renderCurrentStep error:", err);
       this.closeDialog();
-      return;
-    }
-
-    const item = this.currentDialogList[this.dialogStep];
-    if (this.speakerEl) this.speakerEl.textContent = item.speaker;
-    if (this.roleEl) this.roleEl.textContent = `【${item.role}】`;
-
-    const GENERAL_AVATAR_MAP = {
-      "赵云": "assets/generals/zhaoyun_128.png",
-      "关羽": "assets/generals/guanyu_128.png",
-      "张飞": "assets/generals/zhangfei_128.png",
-      "刘备": "assets/generals/liubei_128.png",
-      "诸葛亮": "assets/generals/zhugeliang_128.png",
-      "吕布": "assets/generals/lvbu_128.png",
-      "黄忠": "assets/generals/huangzhong_128.png",
-      "马超": "assets/generals/machao_128.png",
-      "魏延": "assets/generals/weiyan_128.png",
-      "太史慈": "assets/generals/taishici_128.png",
-      "曹操": "assets/generals/caocao_128.png",
-      "司马懿": "assets/generals/simayi_128.png",
-      "程远志": "assets/generals/chenyuanzhi_128.png"
-    };
-
-    if (this.avatarEl) {
-      const avatarSrc = item.image || GENERAL_AVATAR_MAP[item.speaker];
-      if (avatarSrc) {
-        this.avatarEl.innerHTML = `<img src="${avatarSrc}" alt="${item.speaker}" class="dialogue-pixel-avatar" />`;
-      } else if (item.avatar && (item.avatar.endsWith('.png') || item.avatar.endsWith('.webp') || item.avatar.includes('/'))) {
-        this.avatarEl.innerHTML = `<img src="${item.avatar}" class="dialogue-pixel-avatar" />`;
-      } else {
-        this.avatarEl.textContent = item.avatar;
-      }
-    }
-
-    if (this.textEl) this.textEl.textContent = item.text;
-    if (this.stepBadgeEl) this.stepBadgeEl.textContent = `${this.dialogStep + 1} / ${this.currentDialogList.length}`;
-
-    if (this.dialogCardEl) {
-      if (item.side === 'right') {
-        this.dialogCardEl.classList.add("enemy-speaker");
-      } else {
-        this.dialogCardEl.classList.remove("enemy-speaker");
-      }
     }
   }
 
@@ -1591,6 +1596,8 @@ export class StoryManager {
         cb();
       } catch (e) {
         console.error("onFinishCallback error:", e);
+        // 兜底保障：若回调因任何异常中断，强制唤起战斗结算弹窗，杜绝画面冻结卡死
+        document.getElementById("battle-result-modal")?.classList.add("open");
       }
     }
   }
