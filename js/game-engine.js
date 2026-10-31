@@ -3,6 +3,84 @@ import { CharacterRenderer } from './character-renderer.js';
 import { HERO_CAMP_MAP } from './synergy.js?v=20261001_1';
 import { HERO_ULTIMATES, DEFAULT_HERO_ULTIMATE } from './hero-ultimates.js?v=20261003_1';
 
+// 战场多维天时地形与特殊兵略配置表
+export const TERRAIN_CONFIGS = {
+  plains: {
+    key: "plains",
+    name: "中原沃野",
+    icon: "🌾",
+    tag: "🌾 中原沃野",
+    desc: "沃野千里，适宜驰突 · 铁骑冲锋速度+15%",
+    speedMult: 1.0,
+    cavalrySpeedBonus: 0.15,
+    dotDamagePerSecond: 0
+  },
+  snow: {
+    key: "snow",
+    name: "塞北雪原",
+    icon: "❄️",
+    tag: "❄️ 塞北雪原",
+    desc: "暴雪风霜，行军受阻 · 全军移动速度-25%",
+    speedMult: 0.75,
+    cavalrySpeedBonus: 0,
+    dotDamagePerSecond: 0
+  },
+  volcano: {
+    key: "volcano",
+    name: "烈焰焦土",
+    icon: "🌋",
+    tag: "🌋 烈焰焦土",
+    desc: "熔岩高温，地热灼烧 · 全军每秒受10点真实伤害",
+    speedMult: 1.0,
+    cavalrySpeedBonus: 0,
+    dotDamagePerSecond: 10
+  },
+  night_fire: {
+    key: "night_fire",
+    name: "烽火夜战",
+    icon: "🔥",
+    tag: "🔥 烽火夜战",
+    desc: "烈火燎原，灼热难耐 · 全军每秒受8点真实伤害",
+    speedMult: 1.0,
+    cavalrySpeedBonus: 0,
+    dotDamagePerSecond: 8
+  },
+  naval: {
+    key: "naval",
+    name: "烟波水泽",
+    icon: "🌊",
+    tag: "🌊 烟波水泽",
+    desc: "江波泥沼，战船颠簸 · 铁骑移速-20% 远程射程+15%",
+    speedMult: 1.0,
+    cavalrySpeedMult: 0.8,
+    cavalryAtkMult: 0.85,
+    rangedRangeBonus: 0.15,
+    dotDamagePerSecond: 0
+  },
+  desert: {
+    key: "desert",
+    name: "西凉大漠",
+    icon: "🌪️",
+    tag: "🌪️ 西凉大漠",
+    desc: "狂沙漫卷，视线受阻 · 远程射程-20% 近战暴击+15%",
+    speedMult: 1.0,
+    rangedRangeMult: 0.8,
+    meleeCritBonus: 0.15,
+    dotDamagePerSecond: 0
+  },
+  mountain: {
+    key: "mountain",
+    name: "崇山险关",
+    icon: "⛰️",
+    tag: "⛰️ 崇山险关",
+    desc: "险关绝壁，居高易守 · 远程减伤20% 投石破城+30%",
+    speedMult: 1.0,
+    rangedDamageReduction: 0.20,
+    catapultDamageBonus: 0.30,
+    dotDamagePerSecond: 0
+  }
+};
+
 // 全40位名将战场像素精灵与武器打击光芒映射表
 export const HERO_SPRITE_MAPPING = {
   // 🟢 蜀汉 (10)
@@ -346,8 +424,28 @@ export class Unit {
       }
     }
 
+    // 战场天时地形与特殊兵略修正
+    const terrain = battle ? battle.terrainConfig : null;
+    let effectiveRange = this.range;
+    let effectiveSpeed = this.speed;
+
+    if (terrain) {
+      // 1. 行军速度修正 (如雪地移速 -25%)
+      effectiveSpeed *= (terrain.speedMult || 1.0);
+      if (this.type === 'cavalry') {
+        if (terrain.cavalrySpeedBonus) effectiveSpeed *= (1 + terrain.cavalrySpeedBonus);
+        if (terrain.cavalrySpeedMult) effectiveSpeed *= terrain.cavalrySpeedMult;
+      }
+
+      // 2. 射程修正 (如大漠狂沙视线受阻 射程-20%，水泽远程射程+15%)
+      if (this.type === 'archer' || this.type === 'catapult' || this.type === 'zhugeliang') {
+        if (terrain.rangedRangeBonus) effectiveRange *= (1 + terrain.rangedRangeBonus);
+        if (terrain.rangedRangeMult) effectiveRange *= terrain.rangedRangeMult;
+      }
+    }
+
     // 5. 攻击或前进
-    if (target && targetDist <= this.range) {
+    if (target && targetDist <= effectiveRange) {
       this.state = "attack";
       if (this.cooldownTimer <= 0) {
         this.performAttack(target, battle);
@@ -358,9 +456,9 @@ export class Unit {
       this.state = "walk";
       this.walkCycle += 0.15;
       if (this.team === 'blue') {
-        this.x = Math.min(maxBoundX, this.x + this.speed);
+        this.x = Math.min(maxBoundX, this.x + effectiveSpeed);
       } else {
-        this.x = Math.max(minBoundX, this.x - this.speed);
+        this.x = Math.max(minBoundX, this.x - effectiveSpeed);
       }
     }
 
@@ -601,7 +699,12 @@ export class Unit {
         battle.triggerInkWashSlash({ type: 'canglan', x: target.x, y: target.y - 15, direction: this.team === 'blue' ? 1 : -1, heroName: '八卦奇门' });
       }
     } else if (this.type === 'catapult') {
-      battle.spawnBoulder(this.x, this.y - 25, target.x, this.atk);
+      let catapultAtk = this.atk;
+      const terrain = battle ? battle.terrainConfig : null;
+      if (terrain && terrain.catapultDamageBonus && (target instanceof Castle)) {
+        catapultAtk = Math.floor(catapultAtk * (1 + terrain.catapultDamageBonus));
+      }
+      battle.spawnBoulder(this.x, this.y - 25, target.x, catapultAtk);
       sound.playDrum();
     } else {
       sound.playDrum();
@@ -609,10 +712,13 @@ export class Unit {
       
       // 兵种克制与攻击类型判定
       let damage = this.atk;
+      const terrain = battle ? battle.terrainConfig : null;
 
       // 骑兵冲撞撞击破阵：有几率击退敌方步兵
       if (this.type === 'cavalry' && target.type === 'infantry') {
-        damage = Math.floor(damage * 1.3); // 骑兵破步兵
+        let mult = 1.3;
+        if (terrain && terrain.cavalryAtkMult) mult *= terrain.cavalryAtkMult;
+        damage = Math.floor(damage * mult);
         const maxBound = (battle.redCastle && !battle.redCastle.isDead) ? (battle.redCastle.x - 35) : (battle.canvas.width - 40);
         const minBound = (battle.blueCastle && !battle.blueCastle.isDead) ? (battle.blueCastle.x + 35) : 40;
         target.x = Math.max(minBound, Math.min(maxBound, target.x + (this.team === 'blue' ? 12 : -12)));
@@ -668,18 +774,20 @@ export class Unit {
         }
       }
 
-      // ⚔️ 我方全军战术军略：会心暴击与嗜血研习触发
-      if (this.team === 'blue') {
-        if (this.critRate > 0 && Math.random() < this.critRate) {
-          damage = Math.floor(damage * 1.75);
-          battle.addFloatingText("💥 会心暴击！", target.x, target.y - 35, "#ea580c", 1.3);
-          battle.spawnSpark(target.x, target.y - 15);
-        }
-        if (this.lifestealRate > 0 && Math.random() < this.lifestealRate) {
-          const heal = Math.min(Math.floor(damage * 0.5), 60);
-          this.hp = Math.min(this.maxHp, this.hp + heal);
-          battle.addFloatingText(`🩸 嗜血 +${heal}`, this.x, this.y - 40, "#22c55e", 1.2);
-        }
+      // ⚔️ 我方全军战术军略：会心暴击与嗜血研习触发 (结合大漠近战暴击天时)
+      let effectiveCrit = (this.team === 'blue' ? (this.critRate || 0) : 0);
+      if (terrain && terrain.meleeCritBonus && this.type !== 'archer' && this.type !== 'catapult') {
+        effectiveCrit += terrain.meleeCritBonus;
+      }
+      if (effectiveCrit > 0 && Math.random() < effectiveCrit) {
+        damage = Math.floor(damage * 1.75);
+        battle.addFloatingText("💥 会心暴击！", target.x, target.y - 35, "#ea580c", 1.3);
+        battle.spawnSpark(target.x, target.y - 15);
+      }
+      if (this.team === 'blue' && this.lifestealRate > 0 && Math.random() < this.lifestealRate) {
+        const heal = Math.min(Math.floor(damage * 0.5), 60);
+        this.hp = Math.min(this.maxHp, this.hp + heal);
+        battle.addFloatingText(`🩸 嗜血 +${heal}`, this.x, this.y - 40, "#22c55e", 1.2);
       }
 
       // 执行普攻（支持单发、击晕双击或 2~4 次狂暴连击）
@@ -744,6 +852,11 @@ export class Unit {
     }
 
     let finalDmg = amount;
+
+    // ⛰️ 崇山险关地形效果：远程箭矢受到山石阻隔减伤 20%
+    if (battle && battle.terrainConfig && battle.terrainConfig.rangedDamageReduction && attackType === 'arrow') {
+      finalDmg = Math.max(1, Math.floor(finalDmg * (1 - battle.terrainConfig.rangedDamageReduction)));
+    }
 
     // 🛡️ 临时护盾吸收判定 (如先锋护盾、霸体护盾)
     if (this.shield > 0) {
@@ -1541,9 +1654,10 @@ export class BattleWorld {
     this.heroUltimateCastCount = 0;
     this.rankBuff = { atkBonus: 0, defBonus: 0 };
 
-    // 战场多元地形与动态天气系统 (plains, naval, mountain, night_fire, desert)
+    // 战场多元天时地形与特殊兵略系统 (plains, naval, mountain, night_fire, desert, snow, volcano)
     this.battlefieldTheme = 'plains';
     this.battlefieldWeather = 'sunny';
+    this.terrainConfig = TERRAIN_CONFIGS.plains;
     this.weatherParticles = [];
     this.ultimateCutin = null;
     this.initWeatherParticles();
@@ -1556,6 +1670,7 @@ export class BattleWorld {
   setBattlefieldTheme(theme = 'plains', weather = 'sunny') {
     this.battlefieldTheme = theme || 'plains';
     this.battlefieldWeather = weather || 'sunny';
+    this.terrainConfig = TERRAIN_CONFIGS[this.battlefieldTheme] || TERRAIN_CONFIGS.plains;
     this.initWeatherParticles();
   }
 
@@ -1608,6 +1723,16 @@ export class BattleWorld {
         color: ['#dc2626', '#ea580c', '#b45309', '#ca8a04'][Math.floor(Math.random() * 4)],
         type: 'leaf'
       }));
+    } else if (weather === 'snow') {
+      this.weatherParticles = Array.from({ length: 45 }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: -(Math.random() * 1.5 + 0.6),
+        vy: Math.random() * 2.0 + 1.0,
+        size: Math.random() * 3.5 + 1.5,
+        alpha: Math.random() * 0.7 + 0.3,
+        type: 'snow'
+      }));
     } else {
       this.weatherParticles = Array.from({ length: 18 }, () => ({
         x: Math.random() * w,
@@ -1644,6 +1769,11 @@ export class BattleWorld {
         if (p.x < -20) {
           p.x = w + 20;
           p.y = Math.random() * h;
+        }
+      } else if (p.type === 'snow') {
+        if (p.y > gTop + 15 || p.x < -15) {
+          p.y = -10;
+          p.x = Math.random() * (w + 30);
         }
       } else {
         if (p.x < -20) p.x = w + 20;
@@ -2390,6 +2520,35 @@ export class BattleWorld {
 
     this.battleDurationFrames++;
 
+    // 🌋 烈焰焦土/火山环境地热真实灼烧机制 (全场单位每秒受到微量真实伤害)
+    if (this.terrainConfig && this.terrainConfig.dotDamagePerSecond > 0) {
+      this.terrainDotTimer = (this.terrainDotTimer || 0) + 1;
+      if (this.terrainDotTimer >= 60) {
+        this.terrainDotTimer = 0;
+        const dotDmg = this.terrainConfig.dotDamagePerSecond;
+        const allAlive = [...this.blueUnits, ...this.redUnits].filter(u => !u.isDead && !u.isFlying);
+        allAlive.forEach((u, idx) => {
+          u.takeDamage(dotDmg, this, 'true_damage');
+          if (idx % 3 === 0) {
+            this.particles.push({
+              x: u.x + (Math.random() - 0.5) * 16,
+              y: u.y - 4,
+              vx: (Math.random() - 0.5) * 1.0,
+              vy: -Math.random() * 2.0 - 0.5,
+              color: "#ef4444",
+              size: 3,
+              alpha: 0.9,
+              life: 0.04
+            });
+          }
+        });
+        if (this.battleDurationFrames % 180 === 0 && allAlive.length > 0) {
+          const sampleUnit = allAlive[0];
+          this.addFloatingText(`🌋 地热灼烧 -${dotDmg}`, sampleUnit.x, sampleUnit.y - 45, "#ef4444", 1.2);
+        }
+      }
+    }
+
     // 战役多元目标达成检测 (斩首 / 守城 / 攻坚)
     if (this.objective) {
       if (this.objective.type === 'assassinate_boss') {
@@ -2401,8 +2560,38 @@ export class BattleWorld {
           }
         }
         if (this.targetBossUnit && this.targetBossUnit.isDead) {
-          this.onObjectiveComplete('blue', `🎯 阵斩敌帅【${this.objective.targetBossName || '敌方主帅'}】！敌军溃散！`);
-          return;
+          if (!this.bossDefeatRoutTriggered) {
+            this.bossDefeatRoutTriggered = true;
+            this.bossRoutTimer = 90; // 约 1.5 秒大捷全军溃散演出
+            this.screenShake = 18;
+            sound.playVictory();
+            this.addFloatingText(`💥 斩落敌帅【${this.objective.targetBossName || '敌方主帅'}】！敌军士气崩盘！`, this.canvas.width * 0.5, this.groundY - 100, "#facc15", 2.2);
+
+            // 敌军士气瓦解：全员丧失战意反向逃窜，防御归零
+            this.redUnits.forEach(u => {
+              if (!u.isDead) {
+                u.state = 'walk';
+                u.speed = Math.max(2.4, u.speed * 1.5);
+                u.defense = 0;
+                u.stunTimer = 0;
+                this.addFloatingText("💨 溃散！", u.x, u.y - 35, "#fca5a5", 1.2);
+              }
+            });
+
+            // 敌军大营要塞陷入混乱受创
+            if (this.redCastle && !this.redCastle.isDead) {
+              this.redCastle.hp = Math.min(this.redCastle.hp, Math.floor(this.redCastle.maxHp * 0.15));
+            }
+          } else {
+            this.bossRoutTimer--;
+            if (this.bossRoutTimer <= 0) {
+              if (this.redCastle && !this.redCastle.isDead) {
+                this.redCastle.takeDamage(99999, this);
+              }
+              this.onObjectiveComplete('blue', `🎯 阵斩敌帅【${this.objective.targetBossName || '敌方主帅'}】！攻克敌营！`);
+              return;
+            }
+          }
         }
       } else if (this.objective.type === 'defend_time') {
         this.defendFramesLeft--;
@@ -2618,6 +2807,50 @@ export class BattleWorld {
       ctx.fillStyle = "#fca5a5";
       ctx.beginPath();
       ctx.arc(moonX, moonY, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+    } else if (theme === 'snow') {
+      // ❄️ 塞北雪原 · 凛冬风雪与寒白冻空
+      skyGrad.addColorStop(0, "#1e293b");
+      skyGrad.addColorStop(0.35, "#334155");
+      skyGrad.addColorStop(0.7, "#64748b");
+      skyGrad.addColorStop(1, "#cbd5e1");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, this.canvas.height);
+
+      // 寒冬惨白苍阳
+      const sunX = w * 0.78, sunY = 55;
+      const sunGlow = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 50);
+      sunGlow.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+      sunGlow.addColorStop(0.4, "rgba(203, 213, 225, 0.35)");
+      sunGlow.addColorStop(1, "rgba(203, 213, 225, 0)");
+      ctx.fillStyle = sunGlow;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 50, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+    } else if (theme === 'volcano') {
+      // 🌋 烈焰焦土 · 浓烟蔽日与熔岩赤空
+      skyGrad.addColorStop(0, "#09090b");
+      skyGrad.addColorStop(0.25, "#270707");
+      skyGrad.addColorStop(0.65, "#7f1d1d");
+      skyGrad.addColorStop(1, "#c2410c");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, this.canvas.height);
+
+      // 火山滚滚火云
+      const cloudGlow = ctx.createRadialGradient(w * 0.45, 50, 20, w * 0.45, 50, 140);
+      cloudGlow.addColorStop(0, "rgba(249, 115, 22, 0.45)");
+      cloudGlow.addColorStop(0.6, "rgba(127, 29, 29, 0.2)");
+      cloudGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = cloudGlow;
+      ctx.beginPath();
+      ctx.arc(w * 0.45, 50, 140, 0, Math.PI * 2);
       ctx.fill();
 
     } else if (theme === 'desert') {
@@ -2857,6 +3090,75 @@ export class BattleWorld {
       drawBurningTower(w * 0.35, gTop);
       drawBurningTower(w * 0.65, gTop);
 
+    } else if (theme === 'snow') {
+      // ❄️ 塞北雪原 · 积雪群峰与傲雪寒松
+      ctx.fillStyle = "#334155";
+      ctx.beginPath();
+      ctx.moveTo(0, gTop);
+      ctx.lineTo(w * 0.18, gTop - 130);
+      ctx.lineTo(w * 0.38, gTop - 70);
+      ctx.lineTo(w * 0.62, gTop - 150);
+      ctx.lineTo(w * 0.85, gTop - 85);
+      ctx.lineTo(w, gTop - 120);
+      ctx.lineTo(w, gTop);
+      ctx.closePath();
+      ctx.fill();
+
+      // 白雪皑皑山尖积雪
+      ctx.fillStyle = "#ffffff";
+      const drawSnowCap = (px, py, wDelta) => {
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px - wDelta, py + 35);
+        ctx.lineTo(px + wDelta, py + 35);
+        ctx.closePath();
+        ctx.fill();
+      };
+      drawSnowCap(w * 0.18, gTop - 130, 28);
+      drawSnowCap(w * 0.62, gTop - 150, 36);
+      drawSnowCap(w, gTop - 120, 25);
+
+      // 傲雪寒松
+      const drawSnowPine = (px, py) => {
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(-2, -30, 4, 30);
+        ctx.fillStyle = "#1e3a5f";
+        ctx.beginPath();
+        ctx.moveTo(0, -45); ctx.lineTo(-14, -25); ctx.lineTo(14, -25); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(0, -45); ctx.lineTo(-8, -32); ctx.lineTo(8, -32); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      };
+      drawSnowPine(w * 0.28, gTop);
+      drawSnowPine(w * 0.76, gTop);
+
+    } else if (theme === 'volcano') {
+      // 🌋 烈焰焦土 · 火山黑岩与喷薄熔岩脉
+      ctx.fillStyle = "#18181b";
+      ctx.beginPath();
+      ctx.moveTo(0, gTop);
+      ctx.lineTo(w * 0.25, gTop - 145);
+      ctx.lineTo(w * 0.5, gTop - 80);
+      ctx.lineTo(w * 0.75, gTop - 160);
+      ctx.lineTo(w, gTop - 95);
+      ctx.lineTo(w, gTop);
+      ctx.closePath();
+      ctx.fill();
+
+      // 火山喷涌熔岩脉
+      ctx.strokeStyle = "#f97316";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "#ef4444";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.25, gTop - 140); ctx.lineTo(w * 0.28, gTop - 90); ctx.lineTo(w * 0.32, gTop - 40);
+      ctx.moveTo(w * 0.75, gTop - 155); ctx.lineTo(w * 0.72, gTop - 100); ctx.lineTo(w * 0.68, gTop - 35);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
     } else if (theme === 'desert') {
       // 🟡 西凉关陇 · 漫天沙丘、汉代烽燧边塞与枯木胡杨
       ctx.fillStyle = "#b45309";
@@ -3060,6 +3362,55 @@ export class BattleWorld {
       drawGroundTorch(w * 0.5, gTop + 10);
       drawGroundTorch(w - 220, gTop + 12);
 
+    } else if (theme === 'snow') {
+      // ❄️ 塞北雪原 · 积雪厚冰地表与车辙冰纹
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, gTop - 5, w, 7);
+
+      const snowGrad = ctx.createLinearGradient(0, gTop, 0, this.canvas.height);
+      snowGrad.addColorStop(0, "#f1f5f9");
+      snowGrad.addColorStop(0.35, "#e2e8f0");
+      snowGrad.addColorStop(1, "#94a3b8");
+      ctx.fillStyle = snowGrad;
+      ctx.fillRect(0, gTop + 2, w, bottomH - 2);
+
+      // 冰雪车辙印与冰晶反光
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.45)";
+      ctx.lineWidth = 2;
+      for (let y = gTop + 10; y < this.canvas.height; y += 14) {
+        ctx.beginPath();
+        for (let x = 0; x < w; x += 35) {
+          const sy = y + Math.sin(x * 0.08) * 2;
+          if (x === 0) ctx.moveTo(x, sy);
+          else ctx.lineTo(x, sy);
+        }
+        ctx.stroke();
+      }
+
+    } else if (theme === 'volcano') {
+      // 🌋 烈焰焦土 · 焦黑火山岩与熔岩翻涌地缝
+      ctx.fillStyle = "#dc2626";
+      ctx.fillRect(0, gTop - 4, w, 6);
+
+      const lavaGrad = ctx.createLinearGradient(0, gTop, 0, this.canvas.height);
+      lavaGrad.addColorStop(0, "#1c1917");
+      lavaGrad.addColorStop(0.4, "#09090b");
+      lavaGrad.addColorStop(1, "#000000");
+      ctx.fillStyle = lavaGrad;
+      ctx.fillRect(0, gTop + 2, w, bottomH - 2);
+
+      // 灼热熔岩地缝
+      ctx.strokeStyle = "rgba(249, 115, 22, 0.85)";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "#ef4444";
+      ctx.shadowBlur = 10;
+      for (let x = 40; x < w; x += 110) {
+        ctx.beginPath();
+        ctx.moveTo(x, gTop + 10); ctx.lineTo(x + 24, gTop + 20); ctx.lineTo(x + 50, gTop + 12);
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+
     } else if (theme === 'desert') {
       // 🟡 西凉关陇 · 狂沙大漠古道与风蚀波纹
       ctx.fillStyle = "#fbbf24";
@@ -3171,6 +3522,13 @@ export class BattleWorld {
         ctx.fillStyle = p.color || "#ca8a04";
         ctx.beginPath();
         ctx.ellipse(0, 0, p.size * 1.8, p.size * 0.6, -Math.PI / 12, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.type === 'snow') {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+        ctx.shadowColor = "#93c5fd";
+        ctx.shadowBlur = 4;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size, 0, Math.PI * 2);
         ctx.fill();
       } else {
         ctx.fillStyle = p.color || "#fbcfe8";

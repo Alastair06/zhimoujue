@@ -908,13 +908,18 @@ export class CharacterRenderer {
     this.drawLiuBei(ctx, x, y, walkCycle, attackTimer, hurtTimer, team);
   }
 
-  // 10. 无双飞将战神吕布 🐯 (高品质像素精灵 / 原生矢量双模渲染)
+  // 10. 无双飞将战神吕布 (高品质像素精灵 / 原生矢量双模渲染)
   static drawLvBu(ctx, x, y, walkCycle, attackTimer, hurtTimer, team = 'red') {
     if (this.drawPixelGeneral(ctx, x, y, 'lvbu', walkCycle, attackTimer, hurtTimer, team)) {
       return;
     }
     ctx.save();
     ctx.translate(x, y);
+
+    // 矢量兜底朝向校准：蓝方朝右，红方朝左
+    if (team === 'blue') {
+      ctx.scale(-1, 1);
+    }
 
     const legSwing = Math.sin(walkCycle * 1.5) * 8;
     const bodyBounce = Math.abs(Math.sin(walkCycle * 1.5)) * 4;

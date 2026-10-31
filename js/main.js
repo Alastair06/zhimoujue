@@ -1590,6 +1590,7 @@ class PushWarGameApp {
       this.enemyGold = 220;
     }
     this.aiHeroSpawned = false;
+    this.aiUnitsSpawnedCount = 0;
     this.playerSpawnHistory = [];
     this.enemyTargetSpawnPlan = null;
     this.enemyPlanWaitTicks = 0;
@@ -1616,32 +1617,53 @@ class PushWarGameApp {
       this.battle.setRankBuff({ atkBonus: rankInfo.curRank.atkBonus, defBonus: rankInfo.curRank.defBonus });
     }
 
-    // 自动映射历史战役多元地形与动态天气 (plains, naval, mountain, night_fire, desert)
-    let battlefieldTheme = ch.battlefieldTheme || 'plains';
-    let battlefieldWeather = ch.battlefieldWeather || 'sunny';
+    // 自动映射历史战役多元地形与动态天气 (plains, naval, mountain, night_fire, desert, snow, volcano)
+    let battlefieldTheme = ch.battlefieldTheme || '';
+    let battlefieldWeather = ch.battlefieldWeather || '';
 
-    if (!ch.battlefieldTheme) {
-      const fullText = `${ch.enemyName || ''} ${ch.enemyTitle || ''} ${ch.id || ''} ${ch.desc || ''}`;
-      if (/赤壁|濡须|渡江|水淹|水战|江夏|柴桑|津|白帝/.test(fullText)) {
+    if (!battlefieldTheme) {
+      const fullText = `${ch.name || ''} ${ch.title || ''} ${ch.subtitle || ''} ${ch.enemyName || ''} ${ch.enemyTitle || ''} ${ch.id || ''} ${ch.desc || ''}`;
+      if (/雪|冬|塞北|冰|白狼山|冻|霜/.test(fullText) || ch.id === 17) {
+        battlefieldTheme = 'snow';
+        battlefieldWeather = 'snow';
+      } else if (/火山|熔岩|火海|焦土|乌巢|宛城|火烧|下邳|夷陵|猇亭|新野/.test(fullText) || ch.id === 6 || ch.id === 15) {
+        battlefieldTheme = 'volcano';
+        battlefieldWeather = 'fire_embers';
+      } else if (/赤壁|濡须|渡江|水淹|水战|江夏|柴桑|津|白帝|渡口/.test(fullText) || ch.id === 8 || ch.id === 11 || ch.id === 14) {
         battlefieldTheme = 'naval';
         battlefieldWeather = 'mist';
-      } else if (/宛城|火|夜|下邳|濮阳|乌巢|官渡|火烧|夷陵/.test(fullText)) {
-        battlefieldTheme = 'night_fire';
-        battlefieldWeather = 'fire_embers';
-      } else if (/落凤|定军|祁山|街亭|山|险|栈道|剑门|斜谷|南中|泸水/.test(fullText)) {
+      } else if (/落凤|定军|祁山|街亭|山|险|栈道|剑门|斜谷|南中|五丈原|关/.test(fullText) || ch.id === 2 || ch.id === 13 || ch.id === 18) {
         battlefieldTheme = 'mountain';
         battlefieldWeather = 'wind';
-      } else if (/西凉|马超|潼关|渭水|凉州|荒|界桥|白马/.test(fullText)) {
+      } else if (/西凉|马超|潼关|渭水|凉州|荒|界桥|白马|大漠|沙|辕门/.test(fullText) || ch.id === 5) {
         battlefieldTheme = 'desert';
         battlefieldWeather = 'sand';
+      } else {
+        battlefieldTheme = 'plains';
+        battlefieldWeather = 'sunny';
       }
     }
     if (isEndless) {
-      battlefieldTheme = 'night_fire';
-      battlefieldWeather = 'fire_embers';
+      const endlessTerrains = ['plains', 'snow', 'naval', 'desert', 'volcano', 'mountain'];
+      const waveIdx = Math.floor(((this.endlessWave || 1) - 1) / 3) % endlessTerrains.length;
+      battlefieldTheme = endlessTerrains[waveIdx];
+      battlefieldWeather = battlefieldTheme === 'snow' ? 'snow' : (battlefieldTheme === 'volcano' ? 'fire_embers' : (battlefieldTheme === 'naval' ? 'mist' : (battlefieldTheme === 'desert' ? 'sand' : 'sunny')));
     }
 
     this.battle.setBattlefieldTheme(battlefieldTheme, battlefieldWeather);
+
+    // 更新 HUD 战场天时地形徽章与悬浮提示
+    const terrainBadge = document.getElementById("hud-terrain-badge");
+    const tCfg = this.battle.terrainConfig;
+    if (terrainBadge && tCfg) {
+      terrainBadge.textContent = tCfg.tag;
+      terrainBadge.title = tCfg.desc;
+      setTimeout(() => {
+        if (this.battle && !this.battle.isGameOver) {
+          this.battle.addFloatingText(`🗺️【天时地利】${tCfg.desc}`, this.canvas.width * 0.5, this.battle.groundY - 110, "#facc15", 2.2);
+        }
+      }, 500);
+    }
 
     // 初始化战役目标 HUD 悬浮指示条
     const objBadge = document.getElementById("hud-obj-badge");
@@ -3471,13 +3493,18 @@ class PushWarGameApp {
     if (!this.enemyTargetSpawnPlan || (this.enemyPlanWaitTicks && this.enemyPlanWaitTicks > 300)) {
       this.enemyPlanWaitTicks = 0;
 
+      // 敌方名将出阵把控 (防止开局几秒直接送人头秒杀通关)
+      const battleDurationSec = (this.battle.battleDurationFrames || 0) / 60;
+      const redCastleDamaged = this.battle.redCastle && (this.battle.redCastle.hp <= this.battle.redCastle.maxHp * 0.85);
+      const isBossReadyToSpawn = !this.aiHeroSpawned && (battleDurationSec >= 20 || redCastleDamaged || (this.aiUnitsSpawnedCount || 0) >= 3);
+
       // 基础动态出兵权重
       let weights = {
         infantry: 25,
         archer: 25,
         cavalry: 25,
         catapult: 20,
-        boss: (!this.aiHeroSpawned && this.enemyGold >= currentBoss.cost * 0.75) ? 35 : 0
+        boss: (isBossReadyToSpawn && this.enemyGold >= currentBoss.cost * 0.75) ? 40 : 0
       };
 
       const now = Date.now();
@@ -3522,15 +3549,15 @@ class PushWarGameApp {
           this.battle.addFloatingText("⚠️ 敌军针对远程飞矢！调派【突击铁骑】疾速突袭！", this.canvas.width * 0.65, this.battle.groundY - 90, "#3b82f6", 1.6);
         }
       }
-      // 🎯 策略D：蜀汉名将压境
-      if (blueHeroCount >= 1 && !this.aiHeroSpawned) {
-        weights.boss = 95;     // 敌大将亲自迎战
+      // 🎯 策略D：名将压境 (敌帅出阵时机成熟时迎战)
+      if (blueHeroCount >= 1 && isBossReadyToSpawn) {
+        weights.boss = 95;     // 敌大将出阵时机成熟，亲自迎战
         weights.cavalry += 30;
         weights.catapult += 30;
 
         if (canAnnounceTactic) {
           this.aiTacticCooldown = now;
-          this.battle.addFloatingText(`⚠️ 蜀汉名将临阵！敌将【${currentBoss.name}】誓死迎击！`, this.canvas.width * 0.65, this.battle.groundY - 90, "#9333ea", 1.6);
+          this.battle.addFloatingText(`⚠️ 战况胶着！敌帅【${currentBoss.name}】亲率精锐督战出征！`, this.canvas.width * 0.65, this.battle.groundY - 90, "#9333ea", 1.6);
         }
       }
 
@@ -3568,6 +3595,7 @@ class PushWarGameApp {
 
       if (currentPlan.type === "boss") {
         this.aiHeroSpawned = true;
+        this.aiUnitsSpawnedCount = (this.aiUnitsSpawnedCount || 0) + 1;
         this.battle.spawnUnit(currentBoss.type, "red");
         sound.playDrum();
         this.battle.addFloatingText(currentBoss.yell, this.canvas.width - 240, this.battle.groundY - 65, currentBoss.color, 1.6);
@@ -3578,6 +3606,7 @@ class PushWarGameApp {
         }
         this.enemySpawnCooldownTimer = 150 + Math.floor(Math.random() * 50);
       } else {
+        this.aiUnitsSpawnedCount = (this.aiUnitsSpawnedCount || 0) + 1;
         this.battle.spawnUnit(currentPlan.type, "red");
         this.enemySpawnCooldownTimer = 100 + Math.floor(Math.random() * 45);
       }

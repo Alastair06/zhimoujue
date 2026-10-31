@@ -2375,6 +2375,28 @@ html, body {
   border-left: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+.terrain-strip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #facc15;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  border-radius: 9999px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: help;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.terrain-strip-badge:hover {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: #facc15;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.35);
+}
+
 /* ================= 战前名将编队槽位与名册样式 ================= */
 .squad-slot-card {
   background: #ffffff;
