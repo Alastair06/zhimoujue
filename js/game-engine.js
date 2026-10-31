@@ -206,10 +206,12 @@ export class Unit {
     this.maxRage = 100;
     this.ultimateReady = false;
     this.invulnerableTimer = 0;
+    this.ultimateCooldown = 0; // 调息冷却时间（帧数）
   }
 
   addRage(amount) {
     if (!this.isHero || this.team !== 'blue') return;
+    if (this.ultimateCooldown > 0) return; // 处于调息冷却中时不蓄怒
     const oldRage = this.rage || 0;
     this.rage = Math.min(this.maxRage, oldRage + amount);
     if (this.rage >= this.maxRage && oldRage < this.maxRage) {
@@ -218,13 +220,14 @@ export class Unit {
   }
 
   canCastUltimate() {
-    return this.isHero && this.team === 'blue' && !this.isDead && ((this.rage || 0) >= this.maxRage);
+    return this.isHero && this.team === 'blue' && !this.isDead && ((this.rage || 0) >= this.maxRage) && (this.ultimateCooldown <= 0);
   }
 
   castUltimate(battle) {
     if (!this.canCastUltimate()) return false;
     this.rage = 0;
     this.ultimateReady = false;
+    this.ultimateCooldown = 1200; // 释放后进入 20 秒调息冷却（1200 帧 @ 60fps）
     const cleanKey = (this.type || '').replace(/_ch\d+$/, '');
     const ultConfig = HERO_ULTIMATES[this.type] || HERO_ULTIMATES[cleanKey] || DEFAULT_HERO_ULTIMATE;
     
@@ -261,6 +264,7 @@ export class Unit {
     this.lifetime++;
     if (this.hurtTimer > 0) this.hurtTimer--;
     if (this.invulnerableTimer > 0) this.invulnerableTimer--;
+    if (this.ultimateCooldown > 0) this.ultimateCooldown--;
 
     // 0. 眩晕状态判定：被击晕中，原地停滞无法移动与攻击
     if (this.stunTimer > 0) {
@@ -801,7 +805,7 @@ export class Unit {
         }
 
         if (this.isHero && this.team === 'blue') {
-          this.addRage(12);
+          this.addRage(4);
         }
 
         if (h > 0) {
@@ -940,7 +944,7 @@ export class Unit {
     battle.addFloatingText(`-${finalDmg}`, this.x, this.y - 40, this.team === 'blue' ? "#ef4444" : "#f59e0b");
 
     if (this.isHero && this.team === 'blue') {
-      this.addRage(Math.min(25, Math.max(6, Math.floor(finalDmg * 0.15))));
+      this.addRage(Math.min(8, Math.max(2, Math.floor(finalDmg * 0.05))));
     }
 
     if (this.hp <= 0 && !this.isDead) {

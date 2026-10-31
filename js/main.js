@@ -1748,6 +1748,12 @@ class PushWarGameApp {
               heroUnit.castUltimate(this.battle);
               return;
             }
+            if (heroUnit && heroUnit.ultimateCooldown > 0) {
+              sound.playDrum();
+              const cdSec = Math.ceil(heroUnit.ultimateCooldown / 60);
+              this.battle.addFloatingText(`⚠️【${meta.name}】正在回气调息（余 ${cdSec} 秒）！`, 140, this.battle.groundY - 50, "#f59e0b", 1.8);
+              return;
+            }
             sound.playDrum();
             this.battle.addFloatingText(`⚠️【${meta.name}】正在阵中奋战，怒气蓄力中！`, 140, this.battle.groundY - 50, "#ef4444", 1.8);
             return;
@@ -3752,8 +3758,13 @@ class PushWarGameApp {
           btn.classList.add("hero-deployed");
           if (overlay) {
             overlay.classList.add("active");
-            const ragePct = heroUnit ? Math.floor((heroUnit.rage / heroUnit.maxRage) * 100) : 0;
-            overlay.innerHTML = `<span class="hero-deployed-badge">⚔️ 阵中</span><span class="hero-deployed-text">怒气 ${ragePct}%</span>`;
+            if (heroUnit && heroUnit.ultimateCooldown > 0) {
+              const cdSec = Math.ceil(heroUnit.ultimateCooldown / 60);
+              overlay.innerHTML = `<span class="hero-deployed-badge">⌛ 调息</span><span class="hero-deployed-text">${cdSec}秒</span>`;
+            } else {
+              const ragePct = heroUnit ? Math.floor((heroUnit.rage / heroUnit.maxRage) * 100) : 0;
+              overlay.innerHTML = `<span class="hero-deployed-badge">⚔️ 阵中</span><span class="hero-deployed-text">怒气 ${ragePct}%</span>`;
+            }
           }
         }
       } else {

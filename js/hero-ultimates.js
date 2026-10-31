@@ -1,4 +1,22 @@
 // 《吞食三国传》名将怒气专属无双必杀技库 (Active Hero Ultimates)
+// 兵略平衡版：削减全屏秒杀，划定前锋交锋半径，规范攻城震荡，让兵种调度与战术克制重归核心。
+
+// 获取身前交锋范围内的敌军（避免全图秒杀后排与泉水小兵，默认前锋半径 250 码）
+export function getFrontlineEnemies(hero, battle, radius = 250) {
+  const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
+  return enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) <= radius);
+}
+
+// 攻城冲击判定：仅当武将亲自杀到敌阵门楼前沿 (小于 130 码) 时造成适量破城震荡，杜绝全屏隔空炸城
+export function damageCastleIfClose(hero, battle, dmg = 45) {
+  const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
+  if (enemyCastle && !enemyCastle.isDead) {
+    if (Math.abs(enemyCastle.x - hero.x) <= 130) {
+      enemyCastle.takeDamage(dmg, battle);
+      battle.addFloatingText(`💥 破阵冲击 -${dmg}`, enemyCastle.x + (hero.team === 'blue' ? -25 : 25), battle.groundY - 70, "#f59e0b", 1.4);
+    }
+  }
+}
 
 export const HERO_ULTIMATES = {
   // ================= 🟢 蜀汉阵营 (10位) =================
@@ -10,28 +28,25 @@ export const HERO_ULTIMATES = {
     execute: (hero, battle) => {
       battle.triggerScreenShake(18);
       battle.triggerInkWashSlash({ type: 'guanyu', x: hero.x, y: hero.y, direction: 1, heroName: '关羽' });
-      // 巨大青龙刀芒横扫全屏所有敌军
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(280, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 9 : -9;
-          e.vy = -6;
-          e.isFlying = true;
-        }
+      // 巨大青龙刀芒斩击身前锋线敌军 (范围 260 码)
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.takeDamage(135, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
+        e.vy = -4;
+        e.isFlying = true;
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(220, battle);
+      damageCastleIfClose(hero, battle, 50);
 
       // 青龙升腾特效粒子
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 30; i++) {
         battle.particles.push({
-          x: hero.x + (Math.random() - 0.5) * 80,
-          y: hero.y - Math.random() * 80,
-          vx: Math.random() * 12 + 4,
-          vy: (Math.random() - 0.5) * 6,
+          x: hero.x + (Math.random() - 0.5) * 60,
+          y: hero.y - Math.random() * 60,
+          vx: Math.random() * 8 + 3,
+          vy: (Math.random() - 0.5) * 5,
           color: ["#22c55e", "#15803d", "#86efac", "#facc15"][Math.floor(Math.random() * 4)],
-          size: Math.random() * 10 + 4,
+          size: Math.random() * 8 + 3,
           alpha: 1,
           life: 0.03
         });
@@ -45,22 +60,19 @@ export const HERO_ULTIMATES = {
     color: "#f97316",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(22);
+      battle.triggerScreenShake(20);
       battle.triggerInkWashSlash({ type: 'zhangfei', x: hero.x, y: hero.y, direction: 1, heroName: '张飞' });
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.shield = 0;
-          e.takeDamage(190, battle, 'true_damage');
-          e.stunTimer = 180; // 吓破胆眩晕 3 秒！
-          e.defense = Math.floor(e.defense * 0.5);
-          e.vx = hero.team === 'blue' ? 7 : -7;
-          e.vy = -4;
-          e.isFlying = true;
-        }
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.shield = 0;
+        e.takeDamage(100, battle, 'skill');
+        e.stunTimer = 120; // 慑服眩晕 2 秒
+        e.defense = Math.floor(e.defense * 0.7);
+        e.vx = hero.team === 'blue' ? 6 : -6;
+        e.vy = -3;
+        e.isFlying = true;
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(160, battle);
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -72,22 +84,17 @@ export const HERO_ULTIMATES = {
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
       battle.triggerInkWashSlash({ type: 'zhaoyun', x: hero.x, y: hero.y, direction: 1, heroName: '赵云' });
-      hero.invulnerableTimer = 240; // 4 秒无敌闪避
-      hero.speed = hero.baseSpeed * 2.2;
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 450) {
-          e.takeDamage(260, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 8 : -8;
-          e.vy = -5;
-          e.isFlying = true;
-        }
+      hero.invulnerableTimer = 150; // 2.5 秒身法闪避
+      hero.speed = hero.baseSpeed * 1.6;
+      const targets = getFrontlineEnemies(hero, battle, 250);
+      targets.forEach(e => {
+        e.takeDamage(130, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
+        e.vy = -4;
+        e.isFlying = true;
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead && Math.abs(enemyCastle.x - hero.x) < 300) {
-        enemyCastle.takeDamage(200, battle);
-      }
-      setTimeout(() => { if (hero) hero.speed = hero.baseSpeed; }, 4000);
+      damageCastleIfClose(hero, battle, 45);
+      setTimeout(() => { if (hero) hero.speed = hero.baseSpeed; }, 2500);
     }
   },
 
@@ -98,18 +105,18 @@ export const HERO_ULTIMATES = {
     soundType: "coin",
     execute: (hero, battle) => {
       battle.triggerScreenShake(14);
-      // 我方要塞与所有存活友军恢复 45% 生命值，并获得 6 秒【仁德金光盾】
+      // 我方要塞与身周奋战友军沐浴金光，恢复生命与护盾
       if (battle.blueCastle && !battle.blueCastle.isDead) {
-        const healCastle = Math.floor(battle.blueCastle.maxHp * 0.45);
+        const healCastle = Math.floor(battle.blueCastle.maxHp * 0.15);
         battle.blueCastle.hp = Math.min(battle.blueCastle.maxHp, battle.blueCastle.hp + healCastle);
-        battle.addFloatingText(`✨ 汉室九鼎庇护 +${healCastle} HP！`, battle.blueCastle.x + 50, battle.groundY - 120, "#facc15", 2.0);
+        battle.addFloatingText(`✨ 汉室九鼎庇护 +${healCastle} HP！`, battle.blueCastle.x + 50, battle.groundY - 120, "#facc15", 1.6);
       }
       battle.blueUnits.forEach(u => {
-        if (!u.isDead) {
-          const heal = Math.floor(u.maxHp * 0.5);
+        if (!u.isDead && Math.abs(u.x - hero.x) <= 300) {
+          const heal = Math.floor(u.maxHp * 0.25);
           u.hp = Math.min(u.maxHp, u.hp + heal);
-          u.shield = (u.shield || 0) + 120; // 金光盾
-          battle.addFloatingText(`✨ 昭烈圣佑 +${heal}`, u.x, u.y - 45, "#22c55e", 1.4);
+          u.shield = (u.shield || 0) + 60; // 仁德金光盾
+          battle.addFloatingText(`✨ 圣佑 +${heal}`, u.x, u.y - 45, "#22c55e", 1.3);
         }
       });
     }
@@ -121,21 +128,19 @@ export const HERO_ULTIMATES = {
     color: "#60a5fa",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(20);
+      battle.triggerScreenShake(18);
       if (window.sound && typeof window.sound.playThunder === 'function') {
         window.sound.playThunder();
       }
-      battle.triggerInkWashSlash({ type: 'canglan', x: battle.canvas.width * 0.6, y: battle.groundY - 50, direction: 1, heroName: '诸葛亮' });
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(280, battle, 'true_damage');
-          e.stunTimer = 210; // 麻痹 3.5 秒
-          battle.spawnSpark(e.x, e.y - 20);
-        }
+      battle.triggerInkWashSlash({ type: 'canglan', x: hero.x + 120, y: battle.groundY - 50, direction: 1, heroName: '诸葛亮' });
+      // 奇门遁甲定点轰击战线前沿区域 (半径 280 码)
+      const targets = getFrontlineEnemies(hero, battle, 280);
+      targets.forEach(e => {
+        e.takeDamage(135, battle, 'skill');
+        e.stunTimer = 120; // 麻痹定身 2 秒
+        battle.spawnSpark(e.x, e.y - 20);
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(220, battle);
+      damageCastleIfClose(hero, battle, 50);
     }
   },
 
@@ -147,15 +152,14 @@ export const HERO_ULTIMATES = {
     execute: (hero, battle) => {
       battle.triggerScreenShake(15);
       battle.triggerInkWashSlash({ type: 'huangzhong', x: hero.x, y: hero.y, direction: 1, heroName: '黄忠' });
-      // 狙击敌方最强单位与要塞
+      // 狙击视线范围内生命值最高的 2 名敌军将校
       const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      const sorted = enemies.filter(e => !e.isDead).sort((a, b) => b.hp - a.hp);
-      sorted.slice(0, 3).forEach(e => {
-        e.takeDamage(360, battle, 'true_damage');
-        battle.addFloatingText("🎯 金乌破心 -360！", e.x, e.y - 50, "#ef4444", 1.8);
+      const sorted = enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) <= 380).sort((a, b) => b.hp - a.hp);
+      sorted.slice(0, 2).forEach(e => {
+        e.takeDamage(160, battle, 'skill');
+        battle.addFloatingText("🎯 金乌破心 -160！", e.x, e.y - 50, "#ef4444", 1.6);
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(250, battle);
+      damageCastleIfClose(hero, battle, 50);
     }
   },
 
@@ -166,18 +170,15 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(18);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(240, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 10 : -10;
-          e.vy = -6;
-          e.isFlying = true;
-          e.stunTimer = 120;
-        }
+      const targets = getFrontlineEnemies(hero, battle, 250);
+      targets.forEach(e => {
+        e.takeDamage(120, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 8 : -8;
+        e.vy = -4;
+        e.isFlying = true;
+        e.stunTimer = 60; // 冲撞击晕 1 秒
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(200, battle);
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -188,13 +189,12 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(230, battle, 'true_damage');
-          e.speed = Math.max(0.4, e.speed * 0.4); // 移速骤减
-        }
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.takeDamage(105, battle, 'skill');
+        e.speed = Math.max(0.6, e.speed * 0.6); // 战线迟滞减速
       });
+      damageCastleIfClose(hero, battle, 35);
     }
   },
 
@@ -205,13 +205,14 @@ export const HERO_ULTIMATES = {
     soundType: "drum",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
-      hero.atk += 30;
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) < 220).forEach(e => {
-        e.takeDamage(260, battle, 'true_damage');
-        e.vx = hero.team === 'blue' ? 8 : -8;
+      hero.atk += 18;
+      const targets = getFrontlineEnemies(hero, battle, 220);
+      targets.forEach(e => {
+        e.takeDamage(125, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
         e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -222,10 +223,11 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
+      // 身周 300 码汉军将士备受激励，攻击提升 20%
       battle.blueUnits.forEach(u => {
-        if (!u.isDead) {
-          u.atk = Math.floor(u.atk * 1.35);
-          battle.addFloatingText("⚔️ 汉军狂攻 +35%", u.x, u.y - 40, "#38bdf8", 1.2);
+        if (!u.isDead && Math.abs(u.x - hero.x) <= 300) {
+          u.atk = Math.floor(u.atk * 1.20);
+          battle.addFloatingText("⚔️ 汉军昂扬 +20%", u.x, u.y - 40, "#38bdf8", 1.2);
         }
       });
     }
@@ -238,23 +240,22 @@ export const HERO_ULTIMATES = {
     color: "#dc2626",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(20);
-      // 己方全军士气狂暴：攻速暴增 50%，移速 +40%，持续 6 秒！
+      battle.triggerScreenShake(18);
+      // 身侧全军鼓舞：攻速提升 25%，移速 +20%
       battle.blueUnits.forEach(u => {
-        if (!u.isDead) {
-          u.atkCooldown = Math.max(10, Math.floor(u.atkCooldown * 0.5));
-          u.speed = u.baseSpeed * 1.4;
-          battle.addFloatingText("🔥 魏武狂暴 攻速+50%！", u.x, u.y - 50, "#ef4444", 1.5);
+        if (!u.isDead && Math.abs(u.x - hero.x) <= 320) {
+          u.atkCooldown = Math.max(12, Math.floor(u.atkCooldown * 0.75));
+          u.speed = u.baseSpeed * 1.2;
+          battle.addFloatingText("🔥 魏武天威 攻速+25%！", u.x, u.y - 50, "#ef4444", 1.4);
         }
       });
-      // 敌全军威慑减速 50%
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(160, battle, 'true_damage');
-          e.speed = Math.max(0.5, e.speed * 0.5);
-        }
+      // 阵前敌军受威慑减速
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.takeDamage(85, battle, 'skill');
+        e.speed = Math.max(0.6, e.speed * 0.75);
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -264,22 +265,21 @@ export const HERO_ULTIMATES = {
     color: "#6b21a8",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(18);
+      battle.triggerScreenShake(16);
       if (window.sound && typeof window.sound.playThunder === 'function') {
         window.sound.playThunder();
       }
-      // 强行窃取敌方 80 军饷转入我方国库
+      // 窃取敌方 35 军饷注入国库
       if (battle.mainRef) {
-        battle.mainRef.gold += 80;
-        battle.addFloatingText("💰 冢虎窃饷 +80 军饷！", hero.x, hero.y - 65, "#a855f7", 1.8);
+        battle.mainRef.gold += 35;
+        battle.addFloatingText("💰 冢虎巧计 +35 军饷！", hero.x, hero.y - 65, "#a855f7", 1.6);
       }
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(220, battle, 'true_damage');
-          e.stunTimer = 120; // 侵蚀定身
-        }
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.takeDamage(110, battle, 'skill');
+        e.stunTimer = 70; // 侵蚀定身 1.2 秒
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -289,13 +289,12 @@ export const HERO_ULTIMATES = {
     color: "#9333ea",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(16);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.charmedTimer = 180; // 混乱迷魂 3 秒
-          battle.addFloatingText("🌀 鬼才心乱", e.x, e.y - 45, "#ec4899", 1.3);
-        }
+      battle.triggerScreenShake(14);
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.takeDamage(60, battle, 'skill');
+        e.charmedTimer = 110; // 迷魂扰乱 1.8 秒
+        battle.addFloatingText("🌀 鬼才乱阵", e.x, e.y - 45, "#ec4899", 1.3);
       });
     }
   },
@@ -306,17 +305,16 @@ export const HERO_ULTIMATES = {
     color: "#b91c1c",
     soundType: "drum",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(20);
-      hero.hp = Math.min(hero.maxHp, hero.hp + 200); // 嗜血回血
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 260) {
-          e.takeDamage(320, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 9 : -9;
-          e.vy = -6;
-          e.isFlying = true;
-        }
+      battle.triggerScreenShake(18);
+      hero.hp = Math.min(hero.maxHp, hero.hp + 100); // 战意回血
+      const targets = getFrontlineEnemies(hero, battle, 220);
+      targets.forEach(e => {
+        e.takeDamage(145, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
+        e.vy = -4;
+        e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -326,15 +324,14 @@ export const HERO_ULTIMATES = {
     color: "#c2410c",
     soundType: "drum",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(22);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 240) {
-          e.takeDamage(290, battle, 'true_damage');
-          e.defense = 0; // 彻底碎甲
-          e.stunTimer = 150;
-        }
+      battle.triggerScreenShake(20);
+      const targets = getFrontlineEnemies(hero, battle, 220);
+      targets.forEach(e => {
+        e.takeDamage(130, battle, 'skill');
+        e.defense = Math.floor(e.defense * 0.6); // 碎甲 40%
+        e.stunTimer = 90; // 震地昏厥 1.5 秒
       });
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -345,14 +342,13 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(18);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(240, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 9 : -9;
-          e.isFlying = true;
-        }
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.takeDamage(120, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
+        e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -363,14 +359,13 @@ export const HERO_ULTIMATES = {
     soundType: "drum",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
-      hero.hp = Math.min(hero.maxHp, hero.hp + 150);
-      hero.atk += 25;
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 200) {
-          e.takeDamage(260, battle, 'true_damage');
-        }
+      hero.hp = Math.min(hero.maxHp, hero.hp + 80);
+      hero.atk += 15;
+      const targets = getFrontlineEnemies(hero, battle, 200);
+      targets.forEach(e => {
+        e.takeDamage(125, battle, 'skill');
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -381,10 +376,10 @@ export const HERO_ULTIMATES = {
     soundType: "drum",
     execute: (hero, battle) => {
       battle.blueUnits.forEach(u => {
-        if (!u.isDead) {
-          u.shield = (u.shield || 0) + 160;
-          u.defense += 20;
-          battle.addFloatingText("🛡️ 玄武铁壁 +160 盾", u.x, u.y - 40, "#94a3b8", 1.2);
+        if (!u.isDead && Math.abs(u.x - hero.x) <= 260) {
+          u.shield = (u.shield || 0) + 80;
+          u.defense += 10;
+          battle.addFloatingText("🛡️ 玄武铁壁 +80 盾", u.x, u.y - 40, "#94a3b8", 1.2);
         }
       });
     }
@@ -397,12 +392,11 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(15);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(220, battle, 'true_damage');
-        }
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.takeDamage(110, battle, 'skill');
       });
+      damageCastleIfClose(hero, battle, 35);
     }
   },
 
@@ -413,12 +407,11 @@ export const HERO_ULTIMATES = {
     soundType: "drum",
     execute: (hero, battle) => {
       battle.triggerScreenShake(18);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 220) {
-          e.takeDamage(270, battle, 'true_damage');
-        }
+      const targets = getFrontlineEnemies(hero, battle, 220);
+      targets.forEach(e => {
+        e.takeDamage(125, battle, 'skill');
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -429,31 +422,28 @@ export const HERO_ULTIMATES = {
     color: "#ea580c",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(22);
+      battle.triggerScreenShake(20);
       if (window.sound && typeof window.sound.playFirestorm === 'function') {
         window.sound.playFirestorm();
       }
-      battle.triggerInkWashSlash({ type: 'canglan', x: battle.canvas.width * 0.5, y: battle.groundY - 50, direction: 1, heroName: '周瑜' });
-      // 全屏火海焚烧
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(270, battle, 'true_damage');
-          e.burnDmg = 15; // 持续灼烧
-        }
+      battle.triggerInkWashSlash({ type: 'canglan', x: hero.x + 120, y: battle.groundY - 50, direction: 1, heroName: '周瑜' });
+      // 阵前纵火焚烧锋线部队 (范围 280 码)
+      const targets = getFrontlineEnemies(hero, battle, 280);
+      targets.forEach(e => {
+        e.takeDamage(125, battle, 'skill');
+        e.burnDmg = 8; // 持续微弱灼烧
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(220, battle);
+      damageCastleIfClose(hero, battle, 50);
 
-      // 烈焰粒子
-      for (let i = 0; i < 40; i++) {
+      // 烈焰火花粒子
+      for (let i = 0; i < 25; i++) {
         battle.particles.push({
-          x: Math.random() * battle.canvas.width,
-          y: battle.groundY - Math.random() * 80,
-          vx: (Math.random() - 0.5) * 6,
-          vy: -Math.random() * 8 - 2,
+          x: hero.x + (Math.random() - 0.2) * 200,
+          y: battle.groundY - Math.random() * 60,
+          vx: (Math.random() - 0.5) * 4,
+          vy: -Math.random() * 5 - 2,
           color: ["#ef4444", "#f97316", "#facc15"][Math.floor(Math.random() * 3)],
-          size: Math.random() * 8 + 4,
+          size: Math.random() * 6 + 3,
           alpha: 1,
           life: 0.04
         });
@@ -467,12 +457,12 @@ export const HERO_ULTIMATES = {
     color: "#1d4ed8",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(16);
+      battle.triggerScreenShake(15);
       battle.blueUnits.forEach(u => {
-        if (!u.isDead) {
-          u.atkCooldown = Math.max(10, Math.floor(u.atkCooldown * 0.65));
-          u.shield = (u.shield || 0) + 100;
-          battle.addFloatingText("🛡️ 江东神武 攻速+35%", u.x, u.y - 40, "#38bdf8", 1.2);
+        if (!u.isDead && Math.abs(u.x - hero.x) <= 280) {
+          u.atkCooldown = Math.max(12, Math.floor(u.atkCooldown * 0.8));
+          u.shield = (u.shield || 0) + 60;
+          battle.addFloatingText("🛡️ 江东奋战 攻速+20%", u.x, u.y - 40, "#38bdf8", 1.2);
         }
       });
     }
@@ -484,16 +474,15 @@ export const HERO_ULTIMATES = {
     color: "#f59e0b",
     soundType: "drum",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(20);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 220) {
-          e.takeDamage(300, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 9 : -9;
-          e.vy = -6;
-          e.isFlying = true;
-        }
+      battle.triggerScreenShake(18);
+      const targets = getFrontlineEnemies(hero, battle, 220);
+      targets.forEach(e => {
+        e.takeDamage(135, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
+        e.vy = -4;
+        e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -503,15 +492,15 @@ export const HERO_ULTIMATES = {
     color: "#0284c7",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(16);
+      battle.triggerScreenShake(15);
+      // 强弓定点击穿敌阵前锋最强将领
       const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      const sorted = enemies.filter(e => !e.isDead).sort((a, b) => b.hp - a.hp);
+      const sorted = enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) <= 360).sort((a, b) => b.hp - a.hp);
       if (sorted[0]) {
-        sorted[0].takeDamage(380, battle, 'true_damage');
-        battle.addFloatingText("🎯 穿云一箭 -380！", sorted[0].x, sorted[0].y - 50, "#ef4444", 2.0);
+        sorted[0].takeDamage(175, battle, 'skill');
+        battle.addFloatingText("🎯 穿云一箭 -175！", sorted[0].x, sorted[0].y - 50, "#ef4444", 1.8);
       }
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(220, battle);
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -521,17 +510,16 @@ export const HERO_ULTIMATES = {
     color: "#d97706",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(18);
+      battle.triggerScreenShake(16);
       if (window.sound && typeof window.sound.playFirestorm === 'function') {
         window.sound.playFirestorm();
       }
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(250, battle, 'true_damage');
-          e.defense = 0;
-        }
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.takeDamage(115, battle, 'skill');
+        e.defense = Math.floor(e.defense * 0.6); // 烈火焚甲
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -541,16 +529,16 @@ export const HERO_ULTIMATES = {
     color: "#ea580c",
     soundType: "drum",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(18);
-      hero.speed = hero.baseSpeed * 2.0;
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 250) {
-          e.takeDamage(280, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 8 : -8;
-          e.isFlying = true;
-        }
+      battle.triggerScreenShake(16);
+      hero.speed = hero.baseSpeed * 1.5;
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.takeDamage(125, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
+        e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 45);
+      setTimeout(() => { if (hero) hero.speed = hero.baseSpeed; }, 3000);
     }
   },
 
@@ -560,24 +548,30 @@ export const HERO_ULTIMATES = {
     color: "#78716c",
     soundType: "drum",
     execute: (hero, battle) => {
-      hero.hp = hero.maxHp; // 浴血重生满血
-      hero.shield = 200;
-      battle.addFloatingText("🩸 浴血重生 满血复活！", hero.x, hero.y - 60, "#22c55e", 1.8);
+      const heal = Math.floor(hero.maxHp * 0.4);
+      hero.hp = Math.min(hero.maxHp, hero.hp + heal);
+      hero.shield = (hero.shield || 0) + 100;
+      battle.addFloatingText(`🩸 不屈浴血 +${heal} HP！`, hero.x, hero.y - 60, "#22c55e", 1.6);
     }
   },
 
   huanggai: {
     name: "苦肉赤壁 · 烈火战舰冲",
-    shout: "苦肉计成！蒙冲斗舰，直冲曹寨！烧！",
+    shout: "苦肉计成！蒙冲斗舰，直冲敌阵！烧！",
     color: "#dc2626",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(20);
+      battle.triggerScreenShake(18);
+      // 战舰冲击阵前敌军；若已推进至城下则撞击要塞
       const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) {
-        enemyCastle.takeDamage(320, battle);
-        battle.addFloatingText("🔥 火船撞寨 -320！", enemyCastle.x, battle.groundY - 80, "#ef4444", 2.0);
+      if (enemyCastle && !enemyCastle.isDead && Math.abs(enemyCastle.x - hero.x) <= 180) {
+        enemyCastle.takeDamage(85, battle);
+        battle.addFloatingText("🔥 火船撞寨 -85！", enemyCastle.x, battle.groundY - 80, "#ef4444", 1.8);
       }
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.takeDamage(110, battle, 'skill');
+      });
     }
   },
 
@@ -588,13 +582,12 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(220, battle, 'true_damage');
-          e.stunTimer = 120;
-        }
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.takeDamage(110, battle, 'skill');
+        e.stunTimer = 80; // 突袭惊骇 1.3 秒
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -604,9 +597,12 @@ export const HERO_ULTIMATES = {
     color: "#16a34a",
     soundType: "coin",
     execute: (hero, battle) => {
-      if (battle.mainRef) battle.mainRef.gold += 100;
+      if (battle.mainRef) battle.mainRef.gold += 40;
       battle.blueUnits.forEach(u => {
-        if (!u.isDead) u.hp = Math.min(u.maxHp, u.hp + 100);
+        if (!u.isDead && Math.abs(u.x - hero.x) <= 260) {
+          u.hp = Math.min(u.maxHp, u.hp + 60);
+          battle.addFloatingText("🌿 军心安定 +60", u.x, u.y - 35, "#22c55e", 1.1);
+        }
       });
     }
   },
@@ -618,22 +614,19 @@ export const HERO_ULTIMATES = {
     color: "#dc2626",
     soundType: "drum",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(25);
+      battle.triggerScreenShake(22);
       battle.triggerInkWashSlash({ type: 'lvbu', x: hero.x, y: hero.y, direction: 1, heroName: '吕布' });
       hero.isBerserk = true;
-      hero.invulnerableTimer = 300; // 5 秒霸体无敌
-      hero.atk += 40;
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(360, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 10 : -10;
-          e.vy = -7;
-          e.isFlying = true;
-        }
+      hero.invulnerableTimer = 150; // 2.5 秒霸体护身 (从 5 秒合理下调)
+      hero.atk += 20; // 攻势增幅适度
+      const targets = getFrontlineEnemies(hero, battle, 250);
+      targets.forEach(e => {
+        e.takeDamage(160, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 8 : -8;
+        e.vy = -5;
+        e.isFlying = true;
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(280, battle);
+      damageCastleIfClose(hero, battle, 60);
     }
   },
 
@@ -644,13 +637,11 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(14);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.charmedTimer = 240; // 魅惑 4 秒！
-          e.takeDamage(80, battle, 'true_damage');
-          battle.addFloatingText("💖 绝代魅惑 反戈一击！", e.x, e.y - 45, "#ec4899", 1.5);
-        }
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.charmedTimer = 130; // 魅惑停步 2.2 秒
+        e.takeDamage(50, battle, 'skill');
+        battle.addFloatingText("💖 绝代心乱", e.x, e.y - 45, "#ec4899", 1.3);
       });
     }
   },
@@ -661,17 +652,15 @@ export const HERO_ULTIMATES = {
     color: "#7f1d1d",
     soundType: "drum",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(20);
-      hero.size = 54;
-      hero.hp = Math.min(hero.maxHp, hero.hp + 200);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead && Math.abs(e.x - hero.x) < 260) {
-          e.takeDamage(280, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 8 : -8;
-          e.isFlying = true;
-        }
+      battle.triggerScreenShake(18);
+      hero.hp = Math.min(hero.maxHp, hero.hp + 100);
+      const targets = getFrontlineEnemies(hero, battle, 220);
+      targets.forEach(e => {
+        e.takeDamage(130, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
+        e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -682,15 +671,12 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(240, battle, 'true_damage');
-          battle.spawnSpark(e.x, e.y - 20);
-        }
+      const targets = getFrontlineEnemies(hero, battle, 280);
+      targets.forEach(e => {
+        e.takeDamage(110, battle, 'skill');
+        battle.spawnSpark(e.x, e.y - 20);
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(200, battle);
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -700,19 +686,17 @@ export const HERO_ULTIMATES = {
     color: "#eab308",
     soundType: "stratagem",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(22);
-      battle.triggerInkWashSlash({ type: 'canglan', x: battle.canvas.width * 0.5, y: battle.groundY - 50, direction: 1, heroName: '张角' });
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(290, battle, 'true_damage');
-          e.stunTimer = 180;
-        }
+      battle.triggerScreenShake(20);
+      battle.triggerInkWashSlash({ type: 'canglan', x: hero.x + 100, y: battle.groundY - 50, direction: 1, heroName: '张角' });
+      const targets = getFrontlineEnemies(hero, battle, 280);
+      targets.forEach(e => {
+        e.takeDamage(125, battle, 'skill');
+        e.stunTimer = 100; // 雷击麻痹 1.6 秒
       });
-      // 召唤 2 名黄巾死士助阵
+      // 召唤 1 名黄巾死士助阵前排
       battle.spawnUnit('infantry', 'blue');
-      battle.spawnUnit('infantry', 'blue');
-      battle.addFloatingText("⚡ 太平天雷！黄巾死士从天而降！", hero.x + 50, battle.groundY - 100, "#facc15", 2.0);
+      battle.addFloatingText("⚡ 太平神雷！黄巾死士助战！", hero.x + 50, battle.groundY - 100, "#facc15", 1.8);
+      damageCastleIfClose(hero, battle, 45);
     }
   },
 
@@ -722,19 +706,16 @@ export const HERO_ULTIMATES = {
     color: "#15803d",
     soundType: "drum",
     execute: (hero, battle) => {
-      battle.triggerScreenShake(24);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(300, battle, 'true_damage');
-          e.vx = hero.team === 'blue' ? 12 : -12;
-          e.vy = -7;
-          e.isFlying = true;
-          e.defense = 0;
-        }
+      battle.triggerScreenShake(20);
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.takeDamage(135, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 9 : -9;
+        e.vy = -5;
+        e.isFlying = true;
+        e.defense = Math.floor(e.defense * 0.7);
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(250, battle);
+      damageCastleIfClose(hero, battle, 50);
     }
   },
 
@@ -745,14 +726,11 @@ export const HERO_ULTIMATES = {
     soundType: "stratagem",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.forEach(e => {
-        if (!e.isDead) {
-          e.takeDamage(260, battle, 'true_damage');
-        }
+      const targets = getFrontlineEnemies(hero, battle, 260);
+      targets.forEach(e => {
+        e.takeDamage(115, battle, 'skill');
       });
-      const enemyCastle = hero.team === 'blue' ? battle.redCastle : battle.blueCastle;
-      if (enemyCastle && !enemyCastle.isDead) enemyCastle.takeDamage(250, battle);
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -763,12 +741,13 @@ export const HERO_ULTIMATES = {
     soundType: "drum",
     execute: (hero, battle) => {
       battle.triggerScreenShake(18);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) < 220).forEach(e => {
-        e.takeDamage(290, battle, 'true_damage');
-        e.vx = hero.team === 'blue' ? 8 : -8;
+      const targets = getFrontlineEnemies(hero, battle, 220);
+      targets.forEach(e => {
+        e.takeDamage(130, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 7 : -7;
         e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -779,12 +758,13 @@ export const HERO_ULTIMATES = {
     soundType: "drum",
     execute: (hero, battle) => {
       battle.triggerScreenShake(18);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) < 240).forEach(e => {
-        e.takeDamage(280, battle, 'true_damage');
-        e.vx = hero.team === 'blue' ? 9 : -9;
+      const targets = getFrontlineEnemies(hero, battle, 240);
+      targets.forEach(e => {
+        e.takeDamage(125, battle, 'skill');
+        e.vx = hero.team === 'blue' ? 8 : -8;
         e.isFlying = true;
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   },
 
@@ -795,10 +775,11 @@ export const HERO_ULTIMATES = {
     soundType: "drum",
     execute: (hero, battle) => {
       battle.triggerScreenShake(16);
-      const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-      enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) < 200).forEach(e => {
-        e.takeDamage(270, battle, 'true_damage');
+      const targets = getFrontlineEnemies(hero, battle, 200);
+      targets.forEach(e => {
+        e.takeDamage(120, battle, 'skill');
       });
+      damageCastleIfClose(hero, battle, 40);
     }
   }
 };
@@ -811,11 +792,12 @@ export const DEFAULT_HERO_ULTIMATE = {
   soundType: "stratagem",
   execute: (hero, battle) => {
     battle.triggerScreenShake(16);
-    const enemies = hero.team === 'blue' ? battle.redUnits : battle.blueUnits;
-    enemies.filter(e => !e.isDead && Math.abs(e.x - hero.x) < 220).forEach(e => {
-      e.takeDamage(250, battle, 'true_damage');
-      e.vx = hero.team === 'blue' ? 7 : -7;
+    const targets = getFrontlineEnemies(hero, battle, 220);
+    targets.forEach(e => {
+      e.takeDamage(120, battle, 'skill');
+      e.vx = hero.team === 'blue' ? 6 : -6;
       e.isFlying = true;
     });
+    damageCastleIfClose(hero, battle, 40);
   }
 };
